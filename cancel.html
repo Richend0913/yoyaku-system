@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>予約キャンセル - カンタン予約</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="book-body">
+  <!-- Loading -->
+  <div id="loadingOverlay" class="loading-overlay" style="display:none;">
+    <div class="spinner"></div>
+    <p>読み込み中...</p>
+  </div>
+
+  <div class="cancel-page" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;">
+    <div class="container" style="max-width:520px;">
+
+      <!-- Step 1: Verify Phone -->
+      <div id="verifySection" class="register-card center-card">
+        <h1 style="font-size:22px; margin-bottom:8px;">予約キャンセル</h1>
+        <p class="register-subtitle">ご本人確認のため、予約時にご入力いただいた電話番号を入力してください。</p>
+        <div id="refDisplay" style="text-align:center; margin-bottom:20px;">
+          <span style="color:var(--text-muted); font-size:13px;">予約番号:</span>
+          <strong id="refNumberDisplay" style="font-size:16px; color:var(--primary);"></strong>
+        </div>
+        <form id="verifyForm">
+          <div class="form-group">
+            <label for="verifyPhone">電話番号 <span class="required">*</span></label>
+            <input type="tel" id="verifyPhone" required placeholder="090-1234-5678" autocomplete="tel">
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg btn-block">確認する</button>
+        </form>
+        <p id="verifyError" style="color:var(--danger); margin-top:12px; display:none; font-size:14px;"></p>
+      </div>
+
+      <!-- Step 2: Booking Detail + Cancel Button -->
+      <div id="detailSection" class="register-card center-card" style="display:none;">
+        <h1 style="font-size:22px; margin-bottom:16px;">予約内容の確認</h1>
+        <div class="confirm-card" id="bookingDetail"></div>
+        <div id="cancelActions" style="margin-top:24px;">
+          <button id="cancelBtn" class="btn btn-lg btn-block" style="background:var(--danger); color:white; border:none; cursor:pointer;">予約をキャンセルする</button>
+          <p style="margin-top:12px; font-size:13px; color:var(--text-muted); text-align:center;">キャンセル後は元に戻せません。</p>
+        </div>
+        <div id="alreadyCancelled" style="display:none; margin-top:24px; text-align:center;">
+          <p style="color:var(--danger); font-weight:600;">この予約は既にキャンセルされています。</p>
+        </div>
+      </div>
+
+      <!-- Step 3: Done -->
+      <div id="doneSection" class="register-card center-card" style="display:none;">
+        <div class="done-icon" style="width:64px; height:64px; line-height:64px; font-size:28px; margin:0 auto 16px; background:var(--success-bg); color:var(--success); border-radius:50%; text-align:center;">&#10003;</div>
+        <h1 style="font-size:22px; margin-bottom:8px;">キャンセルが完了しました</h1>
+        <p style="color:var(--text-muted); font-size:14px;">予約のキャンセルを承りました。<br>またのご利用をお待ちしております。</p>
+      </div>
+
+      <!-- Error: No ref -->
+      <div id="errorSection" style="display:none; text-align:center;">
+        <h1 style="font-size:20px; margin-bottom:8px;">無効なURL</h1>
+        <p style="color:var(--text-muted);">予約番号が指定されていません。<br>予約完了画面のリンクからアクセスしてください。</p>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="book-footer">
+    <div class="container">
+      <p>Powered by <a href="index.html">カンタン予約</a></p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
+    import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyfqJPXfSTVJ0XaUUt0v15HyWbAsHDYW4",
+      authDomain: "jobconnect-app-54a70.firebaseapp.com",
+      projectId: "jobconnect-app-54a70",
+      storageBucket: "jobconnect-app-54a70.firebasestorage.app",
+      messagingSenderId: "901090319111",
+      appId: "1:901090319111:web:2a5eff8792cc964d54c3a2",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const refNumber = params.get('ref');
+
+    if (!refNumber) {
+      document.getElementById('errorSection').style.display = 'block';
+    } else {
+      document.getElementById('refNumberDisplay').textContent = refNumber;
+      document.getElementById('verifySection').style.display = 'block';
+    }
+
+    let bookingDoc = null;
+    let bookingId = null;
+
+    function normalizePhone(p) {
+      return p.replace(/[\s\-\(\)]/g, '');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const phone = document.getElementById('verifyPhone').value.trim();
+      const errorEl = document.getElementById('verifyError');
+      errorEl.style.display = 'none';
+
+      if (!phone) {
+        errorEl.textContent = '電話番号を入力してください。';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      document.getElementById('loadingOverlay').style.display = 'flex';
+
+      try {
+        const q = query(collection(db, 'bookings'), where('refNumber', '==', refNumber));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          errorEl.textContent = '予約が見つかりません。予約番号をご確認ください。';
+          errorEl.style.display = 'block';
+          document.getElementById('loadingOverlay').style.display = 'none';
+          return;
+        }
+
+        let found = false;
+        snap.forEach(d => {
+          const data = d.data();
+          if (normalizePhone(data.customerPhone) === normalizePhone(phone)) {
+            bookingDoc = data;
+            bookingId = d.id;
+            found = true;
+          }
+        });
+
+        if (!found) {
+          errorEl.textContent = '電話番号が一致しません。予約時にご入力いただいた電話番号をお試しください。';
+          errorEl.style.display = 'block';
+          document.getElementById('loadingOverlay').style.display = 'none';
+          return;
+        }
+
+        // Show booking details
+        const dateObj = new Date(bookingDoc.date + 'T00:00:00');
+        const dateLabel = `${bookingDoc.date.replace(/-/g, '/')}（${'日月火水木金土'[dateObj.getDay()]}）`;
+
+        document.getElementById('bookingDetail').innerHTML = `
+          <div class="confirm-row">
+            <span class="confirm-label">予約番号</span>
+            <span class="confirm-value">${escapeHtml(bookingDoc.refNumber)}</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">お名前</span>
+            <span class="confirm-value">${escapeHtml(bookingDoc.customerName)}</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">メニュー</span>
+            <span class="confirm-value">${escapeHtml(bookingDoc.menuName)}</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">日時</span>
+            <span class="confirm-value">${dateLabel} ${bookingDoc.time}</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">所要時間</span>
+            <span class="confirm-value">${bookingDoc.duration}分</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">料金</span>
+            <span class="confirm-value">¥${(bookingDoc.price || 0).toLocaleString()}</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">人数</span>
+            <span class="confirm-value">${bookingDoc.guestCount || 1}名</span>
+          </div>
+        `;
+
+        document.getElementById('verifySection').style.display = 'none';
+        document.getElementById('detailSection').style.display = 'block';
+
+        if (bookingDoc.status === 'cancelled') {
+          document.getElementById('cancelActions').style.display = 'none';
+          document.getElementById('alreadyCancelled').style.display = 'block';
+        }
+
+        document.getElementById('loadingOverlay').style.display = 'none';
+      } catch (err) {
+        console.error(err);
+        errorEl.textContent = 'エラーが発生しました。もう一度お試しください。';
+        errorEl.style.display = 'block';
+        document.getElementById('loadingOverlay').style.display = 'none';
+      }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', async () => {
+      if (!confirm('本当にこの予約をキャンセルしますか？')) return;
+
+      const btn = document.getElementById('cancelBtn');
+      btn.disabled = true;
+      btn.textContent = '処理中...';
+
+      try {
+        await updateDoc(doc(db, 'bookings', bookingId), { status: 'cancelled' });
+        document.getElementById('detailSection').style.display = 'none';
+        document.getElementById('doneSection').style.display = 'block';
+      } catch (err) {
+        alert('キャンセルに失敗しました。もう一度お試しください。');
+        btn.disabled = false;
+        btn.textContent = '予約をキャンセルする';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -31,6 +31,10 @@
         <h1 id="shopTitle" class="book-shop-name"></h1>
         <p id="shopDescription" class="book-shop-description" style="display:none;"></p>
         <p id="shopMeta" class="book-shop-meta"></p>
+        <a id="mapsLink" href="#" target="_blank" class="btn btn-outline btn-sm" style="display:none; margin-top:12px; color:white; border-color:rgba(255,255,255,0.5);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Google Mapsで見る
+        </a>
       </div>
     </header>
 
@@ -225,7 +229,10 @@
                 予約内容をLINEで送る
               </a>
             </div>
-            <p class="done-note">当日のご来店をお待ちしております。<br>キャンセルの場合は店舗まで直接ご連絡ください。</p>
+            <p class="done-note">当日のご来店をお待ちしております。</p>
+            <p style="margin-top:12px; text-align:center;">
+              <a id="cancelLink" href="#" style="color:var(--danger); font-size:14px;">予約をキャンセルする場合はこちら</a>
+            </p>
           </div>
         </div>
       </div>
@@ -288,6 +295,8 @@
         description: '渋谷の隠れ家サロン。丁寧なカウンセリングで理想のスタイルを実現します。',
         coverImage: '',
         slotInterval: 60,
+        staffCount: 2,
+        closedDates: [],
         hours: {
           mon: {start:'10:00', end:'20:00', closed:false},
           tue: {start:'10:00', end:'20:00', closed:false},
@@ -313,6 +322,8 @@
         description: '厳選素材を使った本格和食。個室完備で接待にも最適です。',
         coverImage: '',
         slotInterval: 30,
+        staffCount: 1,
+        closedDates: [],
         hours: {
           mon: {start:'11:30', end:'22:00', closed:false},
           tue: {start:'11:30', end:'22:00', closed:true},
@@ -414,6 +425,13 @@
         if (shopData.address) meta.push(shopData.address);
         document.getElementById('shopMeta').textContent = meta.join(' | ');
 
+        // Google Maps link
+        if (shopData.address) {
+          const mapsLink = document.getElementById('mapsLink');
+          mapsLink.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(shopData.address);
+          mapsLink.style.display = 'inline-flex';
+        }
+
         renderMenus();
 
         document.getElementById('loadingOverlay').style.display = 'none';
@@ -489,13 +507,15 @@
         const hours = shopData.hours?.[dayKey];
         const isPast = date < today;
         const isClosed = hours?.closed;
-        const isAvailable = !isPast && !isClosed;
+        const isClosedDate = (shopData.closedDates || []).includes(dateStr);
+        const isAvailable = !isPast && !isClosed && !isClosedDate;
         const isSelected = selectedDate === dateStr;
 
         html += `<div class="cal-day ${isAvailable ? 'available' : 'disabled'} ${isSelected ? 'selected' : ''} ${isPast ? 'past' : ''}"
           ${isAvailable ? `data-date="${dateStr}"` : ''}>
           <span class="cal-day-num">${d}</span>
           ${isClosed ? '<span class="cal-day-label">定休</span>' : ''}
+          ${isClosedDate ? '<span class="cal-day-label">休業</span>' : ''}
         </div>`;
       }
 
@@ -543,7 +563,23 @@
       const startMin = startH * 60 + startM;
       const endMin = endH * 60 + endM;
 
-      const dayBookings = existingBookings.filter(b => b.date === selectedDate);
+      const dayBookings = existingBookings.filter(b => b.date === selectedDate && b.status !== 'cancelled');
+      const staffCount = shopData.staffCount || 1;
+
+      function getSlotBookingCount(slotTime, duration) {
+        const [sh, sm] = slotTime.split(':').map(Number);
+        const slotStart = sh * 60 + sm;
+        const slotEnd = slotStart + duration;
+
+        let count = 0;
+        for (const b of dayBookings) {
+          const [bh, bm] = b.time.split(':').map(Number);
+          const bStart = bh * 60 + bm;
+          const bEnd = bStart + (b.duration || interval);
+          if (slotStart < bEnd && slotEnd > bStart) count++;
+        }
+        return count;
+      }
 
       function isSlotAvailable(slotTime, duration) {
         const [sh, sm] = slotTime.split(':').map(Number);
@@ -558,13 +594,7 @@
           if (slotStart <= currentMin) return false;
         }
 
-        for (const b of dayBookings) {
-          const [bh, bm] = b.time.split(':').map(Number);
-          const bStart = bh * 60 + bm;
-          const bEnd = bStart + (b.duration || interval);
-          if (slotStart < bEnd && slotEnd > bStart) return false;
-        }
-        return true;
+        return getSlotBookingCount(slotTime, duration) < staffCount;
       }
 
       let html = '';
@@ -576,11 +606,14 @@
         const min = m % 60;
         const timeStr = `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
         const available = isSlotAvailable(timeStr, menuDuration);
+        const booked = getSlotBookingCount(timeStr, menuDuration);
+        const remaining = staffCount - booked;
 
         if (available) hasSlots = true;
         html += `<button class="time-slot ${available ? 'available' : 'disabled'}"
           ${available ? `data-time="${timeStr}"` : 'disabled'}>
           ${timeStr}
+          ${available && staffCount > 1 ? `<span class="slot-remaining">残り${remaining}枠</span>` : ''}
         </button>`;
       }
 
@@ -694,6 +727,10 @@
         // LINE share link
         const lineText = `【予約確認】\n${shopData.name}\n予約番号: ${refNumber}\n日時: ${dateLabel} ${selectedTime}\nメニュー: ${selectedMenu.name}\n人数: ${guestCount}名\n料金: ¥${selectedMenu.price.toLocaleString()}`;
         document.getElementById('lineShareLink').href = generateLineShareUrl(lineText);
+
+        // Cancel link
+        const cancelUrl = `cancel.html?ref=${encodeURIComponent(refNumber)}`;
+        document.getElementById('cancelLink').href = cancelUrl;
 
         goToStep(6);
       } catch (err) {

@@ -173,18 +173,39 @@
             <input type="tel" id="editShopPhone">
           </div>
         </div>
-        <div class="form-group">
-          <label>予約間隔</label>
-          <select id="editSlotInterval">
-            <option value="30">30分</option>
-            <option value="60">60分</option>
-            <option value="90">90分</option>
-            <option value="120">120分</option>
-          </select>
+        <div class="form-row">
+          <div class="form-group">
+            <label>予約間隔</label>
+            <select id="editSlotInterval">
+              <option value="30">30分</option>
+              <option value="60">60分</option>
+              <option value="90">90分</option>
+              <option value="120">120分</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>スタッフ数（同時予約受付数）</label>
+            <input type="number" id="editStaffCount" min="1" max="20" value="1">
+            <small class="form-help">1枠の時間帯に同時に受けられる予約数です。</small>
+          </div>
         </div>
         <div class="form-actions">
           <button id="saveInfoBtn" class="btn btn-primary">店舗情報を保存</button>
         </div>
+
+        <hr>
+        <h2>臨時休業日設定</h2>
+        <p style="font-size:14px; color:var(--text-muted); margin-bottom:16px;">特定の日付を臨時休業にできます。予約ページのカレンダーに反映されます。</p>
+        <div class="form-row" style="align-items:flex-end;">
+          <div class="form-group" style="flex:1;">
+            <label>休業日を追加</label>
+            <input type="date" id="closedDateInput">
+          </div>
+          <div class="form-group" style="flex:0;">
+            <button id="addClosedDateBtn" class="btn btn-primary btn-sm">追加</button>
+          </div>
+        </div>
+        <div id="closedDatesList" style="margin-top:8px;"></div>
       </div>
     </div>
   </main>
@@ -357,14 +378,30 @@
         return;
       }
 
-      container.innerHTML = bookings.map(b => `
+      // Calculate visit counts per phone number for repeater detection
+      const phoneCounts = {};
+      allBookings.forEach(b => {
+        if (b.customerPhone && b.status !== 'cancelled') {
+          const phone = b.customerPhone.replace(/[\s\-\(\)]/g, '');
+          phoneCounts[phone] = (phoneCounts[phone] || 0) + 1;
+        }
+      });
+
+      container.innerHTML = bookings.map(b => {
+        const normalizedPhone = (b.customerPhone || '').replace(/[\s\-\(\)]/g, '');
+        const visitCount = phoneCounts[normalizedPhone] || 1;
+        const isRepeater = visitCount > 1;
+        return `
         <div class="booking-card ${b.status}" onclick="window.showBookingDetail('${b.id}')" style="cursor:pointer;">
           <div class="booking-time">${b.time}</div>
           <div class="booking-info">
-            <div class="booking-customer">${escapeHtml(b.customerName)}${b.guestCount > 1 ? ` <span class="guest-badge">${b.guestCount}名</span>` : ''}</div>
+            <div class="booking-customer">${escapeHtml(b.customerName)}${isRepeater ? ` <span class="repeater-badge">リピーター (${visitCount}回目)</span>` : ''}${b.guestCount > 1 ? ` <span class="guest-badge">${b.guestCount}名</span>` : ''}</div>
             <div class="booking-menu">${escapeHtml(b.menuName)} (${b.duration}分)</div>
             <div class="booking-contact">${escapeHtml(b.customerPhone)}</div>
-          </div>
+          </div>`;
+      }).map((cardStart, i) => {
+        const b = bookings[i];
+        return cardStart + `
           <div class="booking-actions" onclick="event.stopPropagation()">
             <span class="booking-status status-${b.status}">${statusLabel(b.status)}</span>
             ${b.status === 'confirmed' ? `
@@ -372,8 +409,8 @@
               <button class="btn btn-sm btn-danger" onclick="window.updateStatus('${b.id}', 'cancelled')">キャンセル</button>
             ` : ''}
           </div>
-        </div>
-      `).join('');
+        </div>`
+      }).join('');
     }
 
     function statusLabel(s) {
@@ -402,6 +439,16 @@
         price = menu ? `¥${menu.price.toLocaleString()}` : '-';
       }
 
+      // Check repeater status for this customer
+      const normalizedPhone = (b.customerPhone || '').replace(/[\s\-\(\)]/g, '');
+      let visitCount = 0;
+      allBookings.forEach(bk => {
+        if (bk.customerPhone && bk.status !== 'cancelled') {
+          if (bk.customerPhone.replace(/[\s\-\(\)]/g, '') === normalizedPhone) visitCount++;
+        }
+      });
+      const repeaterHtml = visitCount > 1 ? ` <span class="repeater-badge">リピーター (${visitCount}回目)</span>` : '';
+
       document.getElementById('modalContent').innerHTML = `
         <div class="modal-detail-grid">
           <div class="modal-detail-row">
@@ -415,7 +462,7 @@
           <hr>
           <div class="modal-detail-row">
             <span class="modal-detail-label">お名前</span>
-            <span class="modal-detail-value">${escapeHtml(b.customerName)}</span>
+            <span class="modal-detail-value">${escapeHtml(b.customerName)}${repeaterHtml}</span>
           </div>
           <div class="modal-detail-row">
             <span class="modal-detail-label">電話番号</span>
@@ -508,8 +555,16 @@
         if (dayBookings.length === 0) {
           html += '<div class="cal-empty">-</div>';
         } else {
+          // Group bookings by time and show count
+          const timeGroups = {};
           dayBookings.forEach(b => {
-            html += `<div class="cal-booking status-${b.status}" onclick="window.showBookingDetail('${b.id}')" style="cursor:pointer;"><span class="cal-time">${b.time}</span> ${escapeHtml(b.customerName)}</div>`;
+            if (!timeGroups[b.time]) timeGroups[b.time] = [];
+            timeGroups[b.time].push(b);
+          });
+          dayBookings.forEach(b => {
+            const countAtTime = timeGroups[b.time]?.length || 1;
+            const countLabel = countAtTime > 1 ? ` <span style="font-size:10px; background:var(--primary); color:white; padding:1px 4px; border-radius:4px;">${countAtTime}件</span>` : '';
+            html += `<div class="cal-booking status-${b.status}" onclick="window.showBookingDetail('${b.id}')" style="cursor:pointer;"><span class="cal-time">${b.time}</span>${countLabel} ${escapeHtml(b.customerName)}</div>`;
           });
         }
         html += '</div>';
@@ -708,6 +763,55 @@
       document.getElementById('editShopAddress').value = shopData.address || '';
       document.getElementById('editShopPhone').value = shopData.phone || '';
       document.getElementById('editSlotInterval').value = shopData.slotInterval || 60;
+      document.getElementById('editStaffCount').value = shopData.staffCount || 1;
+
+      // Closed dates
+      renderClosedDates();
+      document.getElementById('addClosedDateBtn').addEventListener('click', async () => {
+        const input = document.getElementById('closedDateInput');
+        const dateVal = input.value;
+        if (!dateVal) { alert('日付を選択してください'); return; }
+        if (!shopData.closedDates) shopData.closedDates = [];
+        if (shopData.closedDates.includes(dateVal)) { alert('既に追加されています'); return; }
+        shopData.closedDates.push(dateVal);
+        shopData.closedDates.sort();
+        try {
+          await updateDoc(doc(db, 'shops', shopId), { closedDates: shopData.closedDates });
+          input.value = '';
+          renderClosedDates();
+        } catch (err) {
+          alert('保存に失敗しました: ' + err.message);
+          shopData.closedDates.pop();
+        }
+      });
+    }
+
+    function renderClosedDates() {
+      const container = document.getElementById('closedDatesList');
+      const dates = shopData.closedDates || [];
+      if (dates.length === 0) {
+        container.innerHTML = '<p style="font-size:14px; color:var(--text-muted);">臨時休業日は設定されていません。</p>';
+        return;
+      }
+      container.innerHTML = dates.map(d => {
+        const dateObj = new Date(d + 'T00:00:00');
+        const label = `${d}（${'日月火水木金土'[dateObj.getDay()]}）`;
+        return `<div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border-light);">
+          <span style="flex:1; font-size:14px;">${label}</span>
+          <button class="btn btn-sm btn-danger" onclick="window.removeClosedDate('${d}')">削除</button>
+        </div>`;
+      }).join('');
+    }
+
+    window.removeClosedDate = async function(dateStr) {
+      if (!confirm(`${dateStr} の臨時休業を削除しますか？`)) return;
+      shopData.closedDates = (shopData.closedDates || []).filter(d => d !== dateStr);
+      try {
+        await updateDoc(doc(db, 'shops', shopId), { closedDates: shopData.closedDates });
+        renderClosedDates();
+      } catch (err) {
+        alert('削除に失敗しました: ' + err.message);
+      }
     }
 
     function generateTimeOptions(defaultVal) {
@@ -747,6 +851,7 @@
         address: document.getElementById('editShopAddress').value.trim(),
         phone: document.getElementById('editShopPhone').value.trim(),
         slotInterval: parseInt(document.getElementById('editSlotInterval').value),
+        staffCount: parseInt(document.getElementById('editStaffCount').value) || 1,
       };
       try {
         await updateDoc(doc(db, 'shops', shopId), updates);

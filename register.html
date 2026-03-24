@@ -72,6 +72,11 @@
                 </div>
               </div>
               <div class="form-group">
+                <label for="staffCount">スタッフ数（同時予約受付数）</label>
+                <input type="number" id="staffCount" min="1" max="20" value="1">
+                <small class="form-help">1枠の時間帯に同時に受けられる予約数を設定します。</small>
+              </div>
+              <div class="form-group">
                 <label for="shopDescription">店舗説明文</label>
                 <textarea id="shopDescription" class="form-textarea" rows="3" placeholder="お店の紹介文を入力してください（予約ページに表示されます）"></textarea>
               </div>
@@ -346,6 +351,8 @@
           coverImage: document.getElementById('shopCoverImage').value.trim(),
           hours,
           slotInterval: parseInt(document.getElementById('slotInterval').value),
+          staffCount: parseInt(document.getElementById('staffCount').value) || 1,
+          closedDates: [],
           menus,
           createdAt: serverTimestamp(),
         };
