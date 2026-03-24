@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
 <body class="dashboard-body">
   <header class="header dashboard-header">
@@ -17,6 +18,10 @@
         <span class="logo-text">カンタン予約</span>
       </a>
       <div class="header-right">
+        <span id="notificationBadge" class="notification-badge" style="display:none;" title="新しい予約があります">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span id="notificationCount" class="notification-count">0</span>
+        </span>
         <span id="shopNameHeader" class="shop-name-header"></span>
         <button id="logoutBtn" class="btn btn-outline btn-sm">ログアウト</button>
       </div>
@@ -29,6 +34,15 @@
     <p>読み込み中...</p>
   </div>
 
+  <!-- Booking Detail Modal -->
+  <div id="bookingModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <button class="modal-close" onclick="document.getElementById('bookingModal').style.display='none'">&times;</button>
+      <h3 class="modal-title">予約詳細</h3>
+      <div id="modalContent" class="modal-body"></div>
+    </div>
+  </div>
+
   <main class="dashboard" id="dashboardMain" style="display:none;">
     <div class="container">
       <!-- Tab Navigation -->
@@ -36,6 +50,7 @@
         <button class="dash-tab active" data-tab="today">今日の予約</button>
         <button class="dash-tab" data-tab="calendar">カレンダー</button>
         <button class="dash-tab" data-tab="menus">メニュー編集</button>
+        <button class="dash-tab" data-tab="share">共有・QR</button>
         <button class="dash-tab" data-tab="settings">設定</button>
       </div>
 
@@ -46,12 +61,16 @@
           <div class="stat-label">今日の予約</div>
         </div>
         <div class="stat-item">
+          <div class="stat-value" id="todayRevenue">¥0</div>
+          <div class="stat-label">本日の売上見込み</div>
+        </div>
+        <div class="stat-item">
           <div class="stat-value" id="monthCount">0</div>
           <div class="stat-label">今月の予約</div>
         </div>
         <div class="stat-item">
           <div class="stat-value" id="monthRevenue">¥0</div>
-          <div class="stat-label">売上見込み</div>
+          <div class="stat-label">今月売上見込み</div>
         </div>
       </div>
 
@@ -66,7 +85,10 @@
 
       <!-- Tab: Today's Bookings -->
       <div class="tab-content active" id="tab-today">
-        <h2>今日の予約一覧</h2>
+        <div class="tab-header-row">
+          <h2>今日の予約一覧</h2>
+          <button id="exportCsvBtn" class="btn btn-outline btn-sm">CSV出力（今月分）</button>
+        </div>
         <div id="todayBookings" class="bookings-list">
           <p class="empty-state">予約はありません</p>
         </div>
@@ -93,6 +115,37 @@
         </div>
       </div>
 
+      <!-- Tab: Share & QR -->
+      <div class="tab-content" id="tab-share">
+        <h2>予約ページの共有</h2>
+        <div class="share-section">
+          <div class="share-qr-card">
+            <h3>予約ページQRコード</h3>
+            <p class="share-description">このQRコードを印刷してカウンターや窓に掲示してください。</p>
+            <div id="qrCodeContainer" class="qr-code-container"></div>
+            <p id="qrUrlLabel" class="qr-url-label"></p>
+          </div>
+          <div class="share-buttons-card">
+            <h3>シェアボタン</h3>
+            <div class="share-buttons-grid">
+              <button id="shareCopyBtn" class="btn btn-outline share-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                URLをコピー
+              </button>
+              <a id="shareLineBtn" href="#" target="_blank" class="btn btn-outline share-btn share-btn-line">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+                LINEで共有
+              </a>
+              <a id="shareInstaBtn" href="https://www.instagram.com/" target="_blank" class="btn btn-outline share-btn share-btn-insta">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                Instagramストーリーに掲載
+              </a>
+            </div>
+            <p class="share-tip">Instagramストーリーに予約ページURLを貼り付けて、お客様に共有しましょう。</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Tab: Settings -->
       <div class="tab-content" id="tab-settings">
         <h2>営業時間の編集</h2>
@@ -105,6 +158,10 @@
         <div class="form-group">
           <label>店舗名</label>
           <input type="text" id="editShopName">
+        </div>
+        <div class="form-group">
+          <label>店舗説明文</label>
+          <textarea id="editShopDescription" class="form-textarea" rows="3" placeholder="店舗の紹介文を入力してください（予約ページに表示されます）"></textarea>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -135,7 +192,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
-    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js';
+    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyAyfqJPXfSTVJ0XaUUt0v15HyWbAsHDYW4",
@@ -154,6 +211,8 @@
     let shopData = null;
     let allBookings = [];
     let currentWeekStart = getMonday(new Date());
+    let initialBookingCount = 0;
+    let bookingUrl = '';
 
     function getMonday(d) {
       const date = new Date(d);
@@ -203,22 +262,53 @@
     async function initDashboard() {
       document.getElementById('shopNameHeader').textContent = shopData.name;
       const baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
-      document.getElementById('bookingUrl').value = `${baseUrl}book.html?shop=${shopId}`;
+      bookingUrl = `${baseUrl}book.html?shop=${shopId}`;
+      document.getElementById('bookingUrl').value = bookingUrl;
 
       // Load all bookings for this shop
       const bookingsQuery = query(collection(db, 'bookings'), where('shopId', '==', shopId));
       const snap = await getDocs(bookingsQuery);
       allBookings = [];
       snap.forEach(d => allBookings.push({ id: d.id, ...d.data() }));
+      initialBookingCount = allBookings.length;
+
+      // Setup realtime listener for new bookings
+      setupRealtimeListener();
 
       renderStats();
       renderTodayBookings();
       renderCalendar();
       initMenuEditor();
       initSettingsEditor();
+      initShareTab();
 
       document.getElementById('loadingOverlay').style.display = 'none';
       document.getElementById('dashboardMain').style.display = 'block';
+    }
+
+    // Realtime notification listener
+    function setupRealtimeListener() {
+      const bookingsQuery = query(collection(db, 'bookings'), where('shopId', '==', shopId));
+      onSnapshot(bookingsQuery, (snapshot) => {
+        const newBookings = [];
+        snapshot.forEach(d => newBookings.push({ id: d.id, ...d.data() }));
+
+        if (newBookings.length > initialBookingCount) {
+          const newCount = newBookings.length - initialBookingCount;
+          const badge = document.getElementById('notificationBadge');
+          const countEl = document.getElementById('notificationCount');
+          badge.style.display = 'flex';
+          countEl.textContent = newCount;
+
+          // Update document title
+          document.title = `(${newCount}) 新規予約 - カンタン予約`;
+        }
+
+        allBookings = newBookings;
+        renderStats();
+        renderTodayBookings();
+        renderCalendar();
+      });
     }
 
     // Stats
@@ -227,6 +317,18 @@
       const todayBookings = allBookings.filter(b => b.date === today && b.status !== 'cancelled');
       document.getElementById('todayCount').textContent = todayBookings.length;
 
+      // Today's revenue
+      let todayRev = 0;
+      todayBookings.forEach(b => {
+        if (b.price !== undefined) {
+          todayRev += b.price;
+        } else {
+          const menu = shopData.menus.find(m => m.name === b.menuName);
+          if (menu) todayRev += menu.price;
+        }
+      });
+      document.getElementById('todayRevenue').textContent = `¥${todayRev.toLocaleString()}`;
+
       const now = new Date();
       const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
       const monthBookings = allBookings.filter(b => b.date.startsWith(monthStr) && b.status !== 'cancelled');
@@ -234,8 +336,12 @@
 
       let revenue = 0;
       monthBookings.forEach(b => {
-        const menu = shopData.menus.find(m => m.name === b.menuName);
-        if (menu) revenue += menu.price;
+        if (b.price !== undefined) {
+          revenue += b.price;
+        } else {
+          const menu = shopData.menus.find(m => m.name === b.menuName);
+          if (menu) revenue += menu.price;
+        }
       });
       document.getElementById('monthRevenue').textContent = `¥${revenue.toLocaleString()}`;
     }
@@ -252,14 +358,14 @@
       }
 
       container.innerHTML = bookings.map(b => `
-        <div class="booking-card ${b.status}">
+        <div class="booking-card ${b.status}" onclick="window.showBookingDetail('${b.id}')" style="cursor:pointer;">
           <div class="booking-time">${b.time}</div>
           <div class="booking-info">
-            <div class="booking-customer">${escapeHtml(b.customerName)}</div>
+            <div class="booking-customer">${escapeHtml(b.customerName)}${b.guestCount > 1 ? ` <span class="guest-badge">${b.guestCount}名</span>` : ''}</div>
             <div class="booking-menu">${escapeHtml(b.menuName)} (${b.duration}分)</div>
             <div class="booking-contact">${escapeHtml(b.customerPhone)}</div>
           </div>
-          <div class="booking-actions">
+          <div class="booking-actions" onclick="event.stopPropagation()">
             <span class="booking-status status-${b.status}">${statusLabel(b.status)}</span>
             ${b.status === 'confirmed' ? `
               <button class="btn btn-sm btn-primary" onclick="window.updateStatus('${b.id}', 'completed')">完了</button>
@@ -279,6 +385,85 @@
       div.textContent = text || '';
       return div.innerHTML;
     }
+
+    // Booking detail modal
+    window.showBookingDetail = function(bookingId) {
+      const b = allBookings.find(x => x.id === bookingId);
+      if (!b) return;
+
+      const dateObj = new Date(b.date + 'T00:00:00');
+      const dateLabel = `${b.date.replace(/-/g, '/')}（${'日月火水木金土'[dateObj.getDay()]}）`;
+
+      let price = '';
+      if (b.price !== undefined) {
+        price = `¥${b.price.toLocaleString()}`;
+      } else {
+        const menu = shopData.menus.find(m => m.name === b.menuName);
+        price = menu ? `¥${menu.price.toLocaleString()}` : '-';
+      }
+
+      document.getElementById('modalContent').innerHTML = `
+        <div class="modal-detail-grid">
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">予約番号</span>
+            <span class="modal-detail-value">${escapeHtml(b.refNumber || '-')}</span>
+          </div>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">ステータス</span>
+            <span class="modal-detail-value"><span class="booking-status status-${b.status}">${statusLabel(b.status)}</span></span>
+          </div>
+          <hr>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">お名前</span>
+            <span class="modal-detail-value">${escapeHtml(b.customerName)}</span>
+          </div>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">電話番号</span>
+            <span class="modal-detail-value"><a href="tel:${escapeHtml(b.customerPhone)}">${escapeHtml(b.customerPhone)}</a></span>
+          </div>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">メール</span>
+            <span class="modal-detail-value">${b.customerEmail ? `<a href="mailto:${escapeHtml(b.customerEmail)}">${escapeHtml(b.customerEmail)}</a>` : '未入力'}</span>
+          </div>
+          <hr>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">メニュー</span>
+            <span class="modal-detail-value">${escapeHtml(b.menuName)}</span>
+          </div>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">日時</span>
+            <span class="modal-detail-value">${dateLabel} ${b.time}</span>
+          </div>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">所要時間</span>
+            <span class="modal-detail-value">${b.duration}分</span>
+          </div>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">料金</span>
+            <span class="modal-detail-value">${price}</span>
+          </div>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">人数</span>
+            <span class="modal-detail-value">${b.guestCount || 1}名</span>
+          </div>
+          ${b.notes ? `
+          <hr>
+          <div class="modal-detail-row">
+            <span class="modal-detail-label">備考</span>
+            <span class="modal-detail-value modal-notes">${escapeHtml(b.notes)}</span>
+          </div>
+          ` : ''}
+        </div>
+      `;
+      document.getElementById('bookingModal').style.display = 'flex';
+    };
+
+    // Close modal on overlay click
+    document.getElementById('bookingModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.style.display = 'none';
+      }
+    });
 
     window.updateStatus = async (bookingId, newStatus) => {
       if (!confirm(`予約を「${statusLabel(newStatus)}」に変更しますか？`)) return;
@@ -324,7 +509,7 @@
           html += '<div class="cal-empty">-</div>';
         } else {
           dayBookings.forEach(b => {
-            html += `<div class="cal-booking status-${b.status}"><span class="cal-time">${b.time}</span> ${escapeHtml(b.customerName)}</div>`;
+            html += `<div class="cal-booking status-${b.status}" onclick="window.showBookingDetail('${b.id}')" style="cursor:pointer;"><span class="cal-time">${b.time}</span> ${escapeHtml(b.customerName)}</div>`;
           });
         }
         html += '</div>';
@@ -349,6 +534,14 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         tab.classList.add('active');
         document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+
+        // Clear notification when clicking today tab
+        if (tab.dataset.tab === 'today') {
+          const badge = document.getElementById('notificationBadge');
+          badge.style.display = 'none';
+          initialBookingCount = allBookings.length;
+          document.title = '管理画面 - カンタン予約';
+        }
       });
     });
 
@@ -361,6 +554,84 @@
         btn.textContent = 'コピー済み!';
         setTimeout(() => btn.textContent = 'コピー', 2000);
       });
+    });
+
+    // Share tab initialization
+    function initShareTab() {
+      // Generate QR code
+      const qr = qrcode(0, 'M');
+      qr.addData(bookingUrl);
+      qr.make();
+      document.getElementById('qrCodeContainer').innerHTML = qr.createSvgTag({ cellSize: 6, margin: 4 });
+      document.getElementById('qrUrlLabel').textContent = bookingUrl;
+
+      // Share buttons
+      document.getElementById('shareCopyBtn').addEventListener('click', () => {
+        navigator.clipboard.writeText(bookingUrl).then(() => {
+          const btn = document.getElementById('shareCopyBtn');
+          btn.textContent = 'コピー済み!';
+          setTimeout(() => {
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> URLをコピー`;
+          }, 2000);
+        });
+      });
+
+      const lineShareText = `${shopData.name}のオンライン予約はこちら！\n${bookingUrl}`;
+      document.getElementById('shareLineBtn').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(bookingUrl) + '&text=' + encodeURIComponent(lineShareText);
+    }
+
+    // CSV Export
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const now = new Date();
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const monthBookings = allBookings.filter(b => b.date.startsWith(monthStr)).sort((a,b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.time.localeCompare(b.time);
+      });
+
+      if (monthBookings.length === 0) {
+        alert('今月の予約データがありません。');
+        return;
+      }
+
+      const headers = ['予約番号','日付','時間','メニュー','所要時間(分)','料金','お名前','電話番号','メール','人数','備考','ステータス'];
+      const rows = monthBookings.map(b => {
+        let price = '';
+        if (b.price !== undefined) {
+          price = b.price;
+        } else {
+          const menu = shopData.menus.find(m => m.name === b.menuName);
+          price = menu ? menu.price : 0;
+        }
+        return [
+          b.refNumber || '',
+          b.date,
+          b.time,
+          b.menuName,
+          b.duration,
+          price,
+          b.customerName,
+          b.customerPhone,
+          b.customerEmail || '',
+          b.guestCount || 1,
+          (b.notes || '').replace(/\n/g, ' '),
+          statusLabel(b.status)
+        ];
+      });
+
+      // BOM for Excel UTF-8 compatibility
+      let csv = '\uFEFF' + headers.join(',') + '\n';
+      rows.forEach(row => {
+        csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bookings_${monthStr}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     });
 
     // Menu Editor
@@ -433,6 +704,7 @@
       });
 
       document.getElementById('editShopName').value = shopData.name || '';
+      document.getElementById('editShopDescription').value = shopData.description || '';
       document.getElementById('editShopAddress').value = shopData.address || '';
       document.getElementById('editShopPhone').value = shopData.phone || '';
       document.getElementById('editSlotInterval').value = shopData.slotInterval || 60;
@@ -471,6 +743,7 @@
     document.getElementById('saveInfoBtn').addEventListener('click', async () => {
       const updates = {
         name: document.getElementById('editShopName').value.trim(),
+        description: document.getElementById('editShopDescription').value.trim(),
         address: document.getElementById('editShopAddress').value.trim(),
         phone: document.getElementById('editShopPhone').value.trim(),
         slotInterval: parseInt(document.getElementById('editSlotInterval').value),

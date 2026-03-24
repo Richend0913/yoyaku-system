@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
 <body>
   <header class="header">
@@ -71,12 +72,21 @@
                 </div>
               </div>
               <div class="form-group">
+                <label for="shopDescription">店舗説明文</label>
+                <textarea id="shopDescription" class="form-textarea" rows="3" placeholder="お店の紹介文を入力してください（予約ページに表示されます）"></textarea>
+              </div>
+              <div class="form-group">
                 <label for="shopAddress">住所</label>
                 <input type="text" id="shopAddress" placeholder="例: 東京都渋谷区神宮前1-1-1">
               </div>
               <div class="form-group">
                 <label for="shopPhone">電話番号</label>
                 <input type="tel" id="shopPhone" placeholder="例: 03-1234-5678">
+              </div>
+              <div class="form-group">
+                <label for="shopCoverImage">カバー画像URL（任意）</label>
+                <input type="url" id="shopCoverImage" placeholder="https://example.com/image.jpg">
+                <small class="form-help">予約ページのヘッダー背景に表示されます。画像URLを貼り付けてください。</small>
               </div>
             </div>
 
@@ -107,6 +117,31 @@
         <div class="register-card center-card">
           <div class="spinner"></div>
           <p>店舗を設定中...</p>
+        </div>
+      </div>
+
+      <!-- Success Screen -->
+      <div id="successSection" class="register-section" style="display:none;">
+        <div class="register-card center-card success-card">
+          <div class="success-icon">🎉</div>
+          <h1>おめでとうございます！</h1>
+          <p class="register-subtitle">店舗の登録が完了しました。<br>予約ページが作成されました。</p>
+
+          <div class="success-url-box">
+            <label>あなたの予約ページURL:</label>
+            <div class="link-copy-group">
+              <input type="text" id="successBookingUrl" readonly>
+              <button id="successCopyBtn" class="btn btn-primary btn-sm">URLをコピー</button>
+            </div>
+          </div>
+
+          <div id="successQrCode" class="success-qr-container"></div>
+
+          <div class="success-tips">
+            <p>このURLをSNSやホームページに貼り付けてください。<br>QRコードを印刷して店頭に掲示するのも効果的です。</p>
+          </div>
+
+          <a href="dashboard.html" class="btn btn-primary btn-lg btn-block success-dashboard-btn">ダッシュボードに進む</a>
         </div>
       </div>
     </div>
@@ -230,6 +265,32 @@
       }
     });
 
+    // Show success screen
+    function showSuccessScreen(shopRefId) {
+      const baseUrl = window.location.origin + window.location.pathname.replace('register.html', '');
+      const bookingUrl = `${baseUrl}book.html?shop=${shopRefId}`;
+
+      document.getElementById('loadingSection').style.display = 'none';
+      document.getElementById('successSection').style.display = 'block';
+
+      document.getElementById('successBookingUrl').value = bookingUrl;
+
+      // Generate QR code
+      const qr = qrcode(0, 'M');
+      qr.addData(bookingUrl);
+      qr.make();
+      document.getElementById('successQrCode').innerHTML = qr.createSvgTag({ cellSize: 6, margin: 4 });
+
+      // Copy button
+      document.getElementById('successCopyBtn').addEventListener('click', () => {
+        navigator.clipboard.writeText(bookingUrl).then(() => {
+          const btn = document.getElementById('successCopyBtn');
+          btn.textContent = 'コピー済み!';
+          setTimeout(() => btn.textContent = 'URLをコピー', 2000);
+        });
+      });
+    }
+
     // Form submit
     document.getElementById('shopSetupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -279,8 +340,10 @@
           ownerId: user.uid,
           name: shopName,
           type: document.getElementById('shopType').value,
+          description: document.getElementById('shopDescription').value.trim(),
           address: document.getElementById('shopAddress').value.trim(),
           phone: document.getElementById('shopPhone').value.trim(),
+          coverImage: document.getElementById('shopCoverImage').value.trim(),
           hours,
           slotInterval: parseInt(document.getElementById('slotInterval').value),
           menus,
@@ -290,7 +353,7 @@
         await setDoc(shopRef, shopData);
         await setDoc(doc(db, 'shopOwners', user.uid), { shopId: shopRef.id });
 
-        window.location.href = 'dashboard.html';
+        showSuccessScreen(shopRef.id);
       } catch (error) {
         alert('保存に失敗しました: ' + error.message);
         document.getElementById('loadingSection').style.display = 'none';
