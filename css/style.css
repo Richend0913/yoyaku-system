@@ -3884,3 +3884,711 @@ body:has(.register-page) .header {
 .dashboard-body::-webkit-scrollbar-thumb:hover {
   background: var(--text-lighter);
 }
+
+/* ============================================
+   MOBILE-PERFECT RESPONSIVE DESIGN
+   Comprehensive fixes for all pages
+   ============================================ */
+
+/* --- Global: Prevent horizontal overflow --- */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ============================================
+   TABLET BREAKPOINT (max-width: 768px)
+   ============================================ */
+@media (max-width: 768px) {
+
+  /* --- Global container padding --- */
+  .container {
+    padding: 0 16px;
+  }
+
+  /* --- Header: compact on mobile --- */
+  .header-inner {
+    height: 56px;
+  }
+  .logo-text {
+    font-size: 17px;
+  }
+
+  /* --- Hero: better mobile spacing --- */
+  .hero {
+    padding: 60px 0 40px;
+  }
+  .hero-title {
+    font-size: 30px;
+  }
+  .hero-subtitle {
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  .hero-cta .btn-lg {
+    width: 100%;
+    justify-content: center;
+    font-size: 15px;
+    padding: 16px 24px;
+  }
+  .hero-note {
+    font-size: 12px;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* --- CTA Section mobile --- */
+  .final-cta {
+    padding: 80px 0;
+  }
+  .cta-title {
+    font-size: 28px;
+  }
+  .cta-subtitle {
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+  .final-cta .btn-lg {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* --- Buttons: full width on mobile --- */
+  .book-main .btn-lg,
+  .book-main .btn-block {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .book-back-btn {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* --- Booking Header: compact --- */
+  .book-header {
+    padding: 28px 0 24px;
+  }
+  .book-shop-name {
+    font-size: 22px;
+  }
+  .book-shop-meta {
+    font-size: 13px;
+  }
+
+  /* --- Progress stepper: smaller labels --- */
+  .progress-step {
+    padding: 6px 10px;
+    font-size: 12px;
+    gap: 6px;
+  }
+  .progress-step .step-label {
+    font-size: 11px;
+  }
+  .progress-step .step-num {
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+  }
+  .progress-step.active .step-num,
+  .progress-step.completed .step-num {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+  .progress-step + .progress-step::before {
+    width: 14px;
+    margin-right: 4px;
+  }
+
+  /* --- Menu cards: full width, larger tap target --- */
+  .menu-grid {
+    max-width: 100%;
+    gap: 12px;
+  }
+  .menu-card {
+    padding: 18px 20px 18px 28px;
+    min-height: 48px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .menu-card-name {
+    font-size: 16px;
+  }
+  .menu-card-details {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .menu-card-price {
+    font-size: 18px;
+  }
+
+  /* --- Calendar: ensure 7 columns fit --- */
+  .date-picker {
+    padding: 16px;
+    max-width: 100%;
+    margin: 0 auto;
+    border-radius: var(--radius-xl);
+  }
+  .cal-weekdays span {
+    padding: 8px 0;
+    font-size: 11px;
+  }
+  .cal-days {
+    gap: 3px;
+  }
+  .cal-day {
+    font-size: 14px;
+    min-width: 0;
+    min-height: 40px;
+  }
+  .cal-day-label {
+    font-size: 7px;
+  }
+  .date-nav {
+    gap: 8px;
+  }
+  .date-nav .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .month-label {
+    font-size: 16px;
+  }
+
+  /* --- Time slots: 3 columns on mobile --- */
+  .time-slots {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 100%;
+  }
+  .time-slot {
+    padding: 14px 6px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+
+  /* --- Form inputs: full width, 16px font-size for iOS --- */
+  .customer-form {
+    max-width: 100%;
+    padding: 24px 20px;
+  }
+  .customer-form .form-group input {
+    font-size: 16px;
+    padding: 14px 16px;
+    width: 100%;
+  }
+
+  /* --- Confirm card: full width --- */
+  .confirm-card {
+    max-width: 100%;
+    padding: 24px 20px;
+  }
+  .confirm-row {
+    padding: 10px 0;
+  }
+  .confirm-label {
+    font-size: 12px;
+  }
+  .confirm-value {
+    font-size: 14px;
+  }
+  #confirmBookingBtn {
+    max-width: 100%;
+    font-size: 16px;
+    padding: 16px 24px;
+    min-height: 48px;
+  }
+
+  /* --- Booking done --- */
+  .booking-done {
+    max-width: 100%;
+  }
+  .done-icon {
+    width: 72px;
+    height: 72px;
+    font-size: 36px;
+  }
+  .booking-done h2 {
+    font-size: 22px;
+  }
+  .done-note {
+    padding: 16px 20px;
+    font-size: 13px;
+  }
+
+  /* --- Book step title --- */
+  .book-step-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* --- Selected info badge --- */
+  .selected-info {
+    font-size: 14px;
+    padding: 6px 16px;
+  }
+
+  /* --- Footer links stack --- */
+  .footer-links {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  /* --- Dashboard: week calendar horizontal scroll --- */
+  .week-calendar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cal-header,
+  .cal-body {
+    min-width: 560px;
+  }
+  .calendar-nav {
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .calendar-nav span {
+    font-size: 14px;
+  }
+
+  /* --- Dashboard: booking cards responsive --- */
+  .booking-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .booking-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .booking-card .btn-sm {
+    min-height: 40px;
+    padding: 8px 16px;
+  }
+
+  /* --- Dashboard: booking link bar --- */
+  .booking-link-bar {
+    padding: 16px;
+  }
+  .link-copy-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .link-copy-group input {
+    font-size: 12px;
+    padding: 12px;
+  }
+  .link-copy-group .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* --- Register: hours row wrapping --- */
+  .hours-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .hours-day {
+    width: 100%;
+    font-size: 14px;
+  }
+  .hours-inputs {
+    flex: 1;
+    min-width: 0;
+  }
+  .hours-select {
+    padding: 10px 8px;
+    font-size: 14px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  /* --- Register: menu item fields wrap --- */
+  .menu-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .menu-item-fields {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .menu-item-fields input,
+  .menu-item-fields select {
+    width: 100%;
+    min-width: 0;
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+  .menu-remove {
+    align-self: flex-end;
+  }
+
+  /* --- Register setup form --- */
+  #setupSection .register-card {
+    padding: 24px 16px;
+  }
+  #setupSection .form-section {
+    padding: 16px 12px;
+  }
+  #setupSection .form-group input,
+  #setupSection .form-group select {
+    font-size: 16px;
+    padding: 14px 16px;
+  }
+  #setupSection .hours-row {
+    padding: 10px 12px;
+  }
+  #setupSection .hours-select {
+    padding: 10px 8px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 0;
+  }
+  #setupSection .form-actions .btn {
+    font-size: 16px;
+    padding: 16px 24px;
+    min-height: 48px;
+  }
+
+  /* --- Register login card --- */
+  #loginSection .register-card {
+    padding: 32px 24px;
+  }
+  .register-card h1 {
+    font-size: 24px;
+  }
+  .btn-google {
+    font-size: 15px;
+    padding: 16px 20px;
+    min-height: 48px;
+  }
+
+  /* --- Dashboard forms --- */
+  .dashboard .form-group input,
+  .dashboard .form-group select {
+    font-size: 16px;
+    padding: 14px 16px;
+  }
+  .dashboard .hours-select {
+    padding: 10px 8px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 0;
+  }
+  .dashboard .menu-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dashboard .menu-item-fields {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dashboard .menu-item-fields input,
+  .dashboard .menu-item-fields select {
+    width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  /* --- Pricing section mobile --- */
+  .pricing-card {
+    padding: 32px 24px;
+  }
+}
+
+/* ============================================
+   SMALL PHONE BREAKPOINT (max-width: 480px)
+   ============================================ */
+@media (max-width: 480px) {
+
+  /* --- Container tighter padding --- */
+  .container {
+    padding: 0 12px;
+  }
+
+  /* --- Header even more compact --- */
+  .header-inner {
+    height: 50px;
+  }
+  .logo-text {
+    font-size: 15px;
+  }
+
+  /* --- Hero very small screens --- */
+  .hero-title {
+    font-size: 26px;
+  }
+  .hero-subtitle {
+    font-size: 13px;
+  }
+  .hero-badge {
+    font-size: 11px;
+    padding: 4px 14px;
+  }
+
+  /* --- Bento cards smaller padding --- */
+  .bento-card {
+    padding: 24px 20px;
+  }
+  .bento-card h3 {
+    font-size: 17px;
+  }
+  .bento-card p {
+    font-size: 13px;
+  }
+
+  /* --- Steps section --- */
+  .step-number {
+    width: 56px;
+    height: 56px;
+    font-size: 22px;
+  }
+  .step h3 {
+    font-size: 16px;
+  }
+
+  /* --- Progress stepper: hide labels on very small screens --- */
+  .progress-step .step-label {
+    display: none;
+  }
+  .progress-step {
+    padding: 6px 8px;
+  }
+  .progress-step + .progress-step::before {
+    width: 10px;
+    margin-right: 2px;
+  }
+
+  /* --- Booking header --- */
+  .book-header {
+    padding: 20px 0 18px;
+  }
+  .book-shop-name {
+    font-size: 19px;
+  }
+  .book-shop-meta {
+    font-size: 12px;
+  }
+
+  /* --- Book step title --- */
+  .book-step-title {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  /* --- Menu cards --- */
+  .menu-card {
+    padding: 16px 16px 16px 24px;
+  }
+  .menu-card-name {
+    font-size: 15px;
+  }
+  .menu-card-price {
+    font-size: 17px;
+  }
+  .menu-card-duration {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+
+  /* --- Calendar: tighter --- */
+  .date-picker {
+    padding: 12px;
+    border-radius: var(--radius-lg);
+  }
+  .cal-weekdays span {
+    font-size: 10px;
+    padding: 6px 0;
+  }
+  .cal-days {
+    gap: 2px;
+  }
+  .cal-day {
+    font-size: 13px;
+    min-height: 36px;
+  }
+  .cal-day-label {
+    font-size: 6px;
+  }
+  .month-label {
+    font-size: 15px;
+  }
+  .date-nav .btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  /* --- Time slots: still 3 columns, tighter --- */
+  .time-slots {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .time-slot {
+    padding: 12px 4px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  /* --- Customer form --- */
+  .customer-form {
+    padding: 20px 16px;
+    border-radius: var(--radius-xl);
+  }
+  .customer-form .form-group input {
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  /* --- Confirm card --- */
+  .confirm-card {
+    padding: 20px 16px;
+  }
+  .confirm-label {
+    font-size: 11px;
+  }
+  .confirm-value {
+    font-size: 13px;
+  }
+  #confirmBookingBtn {
+    font-size: 15px;
+    padding: 14px 20px;
+  }
+
+  /* --- Done page --- */
+  .done-icon {
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
+  }
+  .booking-done h2 {
+    font-size: 20px;
+  }
+  .done-subtitle {
+    font-size: 14px;
+  }
+  .done-note {
+    padding: 14px 16px;
+    font-size: 12px;
+  }
+
+  /* --- Dashboard stats: 1 column on very small --- */
+  .stats-bar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .stat-item {
+    padding: 16px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+  }
+  .stat-value {
+    font-size: 24px;
+    margin-bottom: 0;
+  }
+  .stat-label {
+    margin-top: 0;
+  }
+
+  /* --- Dashboard tabs scroll --- */
+  .dash-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .dash-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .dash-tab {
+    padding: 10px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* --- CTA --- */
+  .cta-title {
+    font-size: 24px;
+  }
+  .cta-subtitle {
+    font-size: 14px;
+  }
+
+  /* --- Pricing --- */
+  .pricing-price {
+    font-size: 38px;
+  }
+  .pricing-currency {
+    font-size: 22px;
+  }
+  .pricing-card {
+    padding: 28px 20px;
+  }
+
+  /* --- FAQ --- */
+  .faq-question {
+    padding: 16px 18px;
+    font-size: 14px;
+  }
+  .faq-answer p {
+    padding: 0 18px 16px;
+    font-size: 13px;
+  }
+  .faq-toggle {
+    width: 28px;
+    height: 28px;
+    margin-left: 10px;
+  }
+
+  /* --- Register page --- */
+  .register-page > .container {
+    padding: 72px 12px 24px;
+  }
+  #loginSection .register-card {
+    padding: 28px 20px;
+  }
+  #setupSection .register-card {
+    padding: 20px 12px;
+  }
+  #setupSection .form-section {
+    padding: 14px 10px;
+  }
+  .register-card h1 {
+    font-size: 22px;
+  }
+  .register-subtitle {
+    font-size: 14px;
+  }
+  .btn-google {
+    font-size: 14px;
+    padding: 14px 16px;
+  }
+
+  /* --- Section titles --- */
+  .section-title {
+    font-size: 24px;
+  }
+  .section-subtitle {
+    font-size: 14px;
+  }
+
+  /* --- How it works --- */
+  .how-it-works {
+    padding: 60px 0;
+  }
+
+  /* --- Features --- */
+  .features {
+    padding: 60px 0;
+  }
+}
