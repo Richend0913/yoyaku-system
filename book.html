@@ -200,7 +200,6 @@
     // Get shop ID from URL
     const params = new URLSearchParams(window.location.search);
     const shopId = params.get('shop');
-    const isDemo = shopId === 'demo';
 
     if (!shopId) {
       document.getElementById('loadingOverlay').style.display = 'none';
@@ -218,29 +217,58 @@
     const dayKeyMap = ['sun','mon','tue','wed','thu','fri','sat'];
 
     // Demo data
-    const DEMO_SHOP = {
-      name: 'Hair Salon BLOOM',
-      type: '美容室',
-      address: '東京都渋谷区神宮前1-2-3',
-      phone: '03-1234-5678',
-      slotInterval: 60,
-      hours: {
-        mon: {start:'10:00', end:'20:00', closed:false},
-        tue: {start:'10:00', end:'20:00', closed:false},
-        wed: {start:'10:00', end:'20:00', closed:true},
-        thu: {start:'10:00', end:'20:00', closed:false},
-        fri: {start:'10:00', end:'21:00', closed:false},
-        sat: {start:'09:00', end:'20:00', closed:false},
-        sun: {start:'09:00', end:'18:00', closed:false}
+    const DEMO_SHOPS = {
+      demo: {
+        name: 'Hair Salon BLOOM',
+        type: '美容室',
+        address: '東京都渋谷区神宮前1-2-3',
+        phone: '03-1234-5678',
+        slotInterval: 60,
+        hours: {
+          mon: {start:'10:00', end:'20:00', closed:false},
+          tue: {start:'10:00', end:'20:00', closed:false},
+          wed: {start:'10:00', end:'20:00', closed:true},
+          thu: {start:'10:00', end:'20:00', closed:false},
+          fri: {start:'10:00', end:'21:00', closed:false},
+          sat: {start:'09:00', end:'20:00', closed:false},
+          sun: {start:'09:00', end:'18:00', closed:false}
+        },
+        menus: [
+          {name: 'カット', duration: 60, price: 4000},
+          {name: 'カット + カラー', duration: 120, price: 8000},
+          {name: 'パーマ', duration: 90, price: 6500},
+          {name: 'トリートメント', duration: 45, price: 3500},
+          {name: 'ヘッドスパ', duration: 30, price: 2500}
+        ]
       },
-      menus: [
-        {name: 'カット', duration: 60, price: 4000},
-        {name: 'カット + カラー', duration: 120, price: 8000},
-        {name: 'パーマ', duration: 90, price: 6500},
-        {name: 'トリートメント', duration: 45, price: 3500},
-        {name: 'ヘッドスパ', duration: 30, price: 2500}
-      ]
+      restaurant: {
+        name: '和食ダイニング 花月',
+        type: '飲食店',
+        address: '東京都港区六本木3-4-5',
+        phone: '03-9876-5432',
+        slotInterval: 30,
+        hours: {
+          mon: {start:'11:30', end:'22:00', closed:false},
+          tue: {start:'11:30', end:'22:00', closed:true},
+          wed: {start:'11:30', end:'22:00', closed:false},
+          thu: {start:'11:30', end:'22:00', closed:false},
+          fri: {start:'11:30', end:'23:00', closed:false},
+          sat: {start:'11:00', end:'23:00', closed:false},
+          sun: {start:'11:00', end:'21:00', closed:false}
+        },
+        menus: [
+          {name: 'ランチコース', duration: 60, price: 1500},
+          {name: 'レディースランチ', duration: 60, price: 1800},
+          {name: 'ディナーコース（松）', duration: 120, price: 5000},
+          {name: 'ディナーコース（竹）', duration: 120, price: 8000},
+          {name: 'ディナーコース（梅）', duration: 120, price: 12000},
+          {name: '個室利用（2〜4名）', duration: 120, price: 3000},
+          {name: '飲み放題プラン', duration: 120, price: 2500}
+        ]
+      }
     };
+    const DEMO_SHOP = DEMO_SHOPS[shopId] || DEMO_SHOPS['demo'];
+    const isDemo = !!DEMO_SHOPS[shopId];
 
     // Load shop
     async function loadShop() {
