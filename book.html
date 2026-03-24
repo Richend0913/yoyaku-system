@@ -202,8 +202,15 @@
     const shopId = params.get('shop');
 
     if (!shopId) {
-      document.getElementById('loadingOverlay').style.display = 'none';
-      document.getElementById('errorPage').style.display = 'block';
+      // No shop param - check if URL path has demo hint
+      const path = window.location.pathname;
+      if (path.includes('demo')) {
+        // Redirect to demo with param
+        window.location.href = 'book.html?shop=demo';
+      } else {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('errorPage').style.display = 'block';
+      }
     }
 
     let shopData = null;
@@ -263,7 +270,8 @@
           {name: 'ディナーコース（竹）', duration: 120, price: 8000},
           {name: 'ディナーコース（梅）', duration: 120, price: 12000},
           {name: '個室利用（2〜4名）', duration: 120, price: 3000},
-          {name: '飲み放題プラン', duration: 120, price: 2500}
+          {name: '飲み放題プラン', duration: 120, price: 2500},
+          {name: '席のみ予約（単品注文）', duration: 90, price: 0}
         ]
       }
     };
