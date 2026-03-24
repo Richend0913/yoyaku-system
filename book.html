@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>オンライン予約 - カンタン予約</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="book-body">
+  <!-- Loading -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>読み込み中...</p>
+  </div>
+
+  <!-- Error -->
+  <div id="errorPage" class="book-error" style="display:none;">
+    <div class="container">
+      <h1>店舗が見つかりません</h1>
+      <p>URLをご確認ください。</p>
+    </div>
+  </div>
+
+  <!-- Main Booking Flow -->
+  <div id="bookingApp" style="display:none;">
+    <header class="book-header">
+      <div class="container">
+        <h1 id="shopTitle" class="book-shop-name"></h1>
+        <p id="shopMeta" class="book-shop-meta"></p>
+      </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="book-progress">
+      <div class="container">
+        <div class="progress-steps">
+          <div class="progress-step active" data-step="1"><span class="step-num">1</span><span class="step-label">メニュー</span></div>
+          <div class="progress-step" data-step="2"><span class="step-num">2</span><span class="step-label">日付</span></div>
+          <div class="progress-step" data-step="3"><span class="step-num">3</span><span class="step-label">時間</span></div>
+          <div class="progress-step" data-step="4"><span class="step-num">4</span><span class="step-label">お客様情報</span></div>
+          <div class="progress-step" data-step="5"><span class="step-num">5</span><span class="step-label">確認</span></div>
+        </div>
+      </div>
+    </div>
+
+    <main class="book-main">
+      <div class="container">
+        <!-- Step 1: Menu Selection -->
+        <div class="book-step active" id="step1">
+          <h2 class="book-step-title">メニューを選択してください</h2>
+          <div id="menuGrid" class="menu-grid"></div>
+        </div>
+
+        <!-- Step 2: Date Selection -->
+        <div class="book-step" id="step2">
+          <h2 class="book-step-title">日付を選択してください</h2>
+          <div class="date-picker">
+            <div class="date-nav">
+              <button id="prevMonth" class="btn btn-outline btn-sm">← 前月</button>
+              <span id="monthLabel" class="month-label"></span>
+              <button id="nextMonth" class="btn btn-outline btn-sm">次月 →</button>
+            </div>
+            <div class="calendar-grid">
+              <div class="cal-weekdays">
+                <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+              </div>
+              <div id="calendarDays" class="cal-days"></div>
+            </div>
+          </div>
+          <button class="btn btn-outline book-back-btn" onclick="goToStep(1)">← メニュー選択に戻る</button>
+        </div>
+
+        <!-- Step 3: Time Selection -->
+        <div class="book-step" id="step3">
+          <h2 class="book-step-title">時間を選択してください</h2>
+          <p id="selectedDateLabel" class="selected-info"></p>
+          <div id="timeSlots" class="time-slots"></div>
+          <button class="btn btn-outline book-back-btn" onclick="goToStep(2)">← 日付選択に戻る</button>
+        </div>
+
+        <!-- Step 4: Customer Info -->
+        <div class="book-step" id="step4">
+          <h2 class="book-step-title">お客様情報を入力してください</h2>
+          <form id="customerForm" class="customer-form">
+            <div class="form-group">
+              <label for="custName">お名前 <span class="required">*</span></label>
+              <input type="text" id="custName" required placeholder="山田 太郎" autocomplete="name">
+            </div>
+            <div class="form-group">
+              <label for="custPhone">電話番号 <span class="required">*</span></label>
+              <input type="tel" id="custPhone" required placeholder="090-1234-5678" autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label for="custEmail">メールアドレス</label>
+              <input type="email" id="custEmail" placeholder="example@email.com" autocomplete="email">
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">確認画面へ進む</button>
+          </form>
+          <button class="btn btn-outline book-back-btn" onclick="goToStep(3)">← 時間選択に戻る</button>
+        </div>
+
+        <!-- Step 5: Confirmation -->
+        <div class="book-step" id="step5">
+          <h2 class="book-step-title">予約内容の確認</h2>
+          <div class="confirm-card">
+            <div class="confirm-row">
+              <span class="confirm-label">メニュー</span>
+              <span class="confirm-value" id="confMenu"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">日付</span>
+              <span class="confirm-value" id="confDate"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">時間</span>
+              <span class="confirm-value" id="confTime"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">所要時間</span>
+              <span class="confirm-value" id="confDuration"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">料金</span>
+              <span class="confirm-value" id="confPrice"></span>
+            </div>
+            <hr>
+            <div class="confirm-row">
+              <span class="confirm-label">お名前</span>
+              <span class="confirm-value" id="confName"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">電話番号</span>
+              <span class="confirm-value" id="confPhone"></span>
+            </div>
+            <div class="confirm-row">
+              <span class="confirm-label">メール</span>
+              <span class="confirm-value" id="confEmail"></span>
+            </div>
+          </div>
+          <button id="confirmBookingBtn" class="btn btn-primary btn-lg btn-block">予約を確定する</button>
+          <button class="btn btn-outline book-back-btn" onclick="goToStep(4)">← お客様情報に戻る</button>
+        </div>
+
+        <!-- Step 6: Done -->
+        <div class="book-step" id="step6">
+          <div class="booking-done">
+            <div class="done-icon">✓</div>
+            <h2>予約が完了しました</h2>
+            <p class="done-subtitle">ご予約ありがとうございます。</p>
+            <div class="confirm-card">
+              <div class="confirm-row">
+                <span class="confirm-label">メニュー</span>
+                <span class="confirm-value" id="doneMenu"></span>
+              </div>
+              <div class="confirm-row">
+                <span class="confirm-label">日付</span>
+                <span class="confirm-value" id="doneDate"></span>
+              </div>
+              <div class="confirm-row">
+                <span class="confirm-label">時間</span>
+                <span class="confirm-value" id="doneTime"></span>
+              </div>
+              <div class="confirm-row">
+                <span class="confirm-label">お名前</span>
+                <span class="confirm-value" id="doneName"></span>
+              </div>
+            </div>
+            <p class="done-note">当日のご来店をお待ちしております。<br>キャンセルの場合は店舗まで直接ご連絡ください。</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="book-footer">
+      <div class="container">
+        <p>Powered by <a href="index.html">カンタン予約</a></p>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
+    import { getFirestore, doc, getDoc, addDoc, collection, query, where, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyfqJPXfSTVJ0XaUUt0v15HyWbAsHDYW4",
+      authDomain: "jobconnect-app-54a70.firebaseapp.com",
+      projectId: "jobconnect-app-54a70",
+      storageBucket: "jobconnect-app-54a70.firebasestorage.app",
+      messagingSenderId: "901090319111",
+      appId: "1:901090319111:web:2a5eff8792cc964d54c3a2",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Get shop ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const shopId = params.get('shop');
+    if (!shopId) {
+      document.getElementById('loadingOverlay').style.display = 'none';
+      document.getElementById('errorPage').style.display = 'block';
+    }
+
+    let shopData = null;
+    let existingBookings = [];
+    let selectedMenu = null;
+    let selectedDate = null;
+    let selectedTime = null;
+    let currentMonth = new Date();
+
+    // Day key mapping (0=Sun, 1=Mon, ...)
+    const dayKeyMap = ['sun','mon','tue','wed','thu','fri','sat'];
+
+    // Load shop
+    async function loadShop() {
+      try {
+        const shopDoc = await getDoc(doc(db, 'shops', shopId));
+        if (!shopDoc.exists()) {
+          document.getElementById('loadingOverlay').style.display = 'none';
+          document.getElementById('errorPage').style.display = 'block';
+          return;
+        }
+        shopData = shopDoc.data();
+        document.title = `${shopData.name} - オンライン予約`;
+        document.getElementById('shopTitle').textContent = shopData.name;
+
+        const meta = [];
+        if (shopData.type) meta.push(shopData.type);
+        if (shopData.address) meta.push(shopData.address);
+        document.getElementById('shopMeta').textContent = meta.join(' | ');
+
+        // Load existing bookings (for availability check)
+        const bookingsQuery = query(collection(db, 'bookings'), where('shopId', '==', shopId), where('status', '==', 'confirmed'));
+        const snap = await getDocs(bookingsQuery);
+        existingBookings = [];
+        snap.forEach(d => existingBookings.push(d.data()));
+
+        renderMenus();
+
+        document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('bookingApp').style.display = 'block';
+      } catch (err) {
+        console.error(err);
+        document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('errorPage').style.display = 'block';
+      }
+    }
+
+    if (shopId) loadShop();
+
+    // Step navigation
+    window.goToStep = function(step) {
+      document.querySelectorAll('.book-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('step' + step).classList.add('active');
+      document.querySelectorAll('.progress-step').forEach(s => {
+        const sNum = parseInt(s.dataset.step);
+        s.classList.toggle('active', sNum <= step);
+        s.classList.toggle('completed', sNum < step);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Step 1: Menus
+    function renderMenus() {
+      const grid = document.getElementById('menuGrid');
+      grid.innerHTML = shopData.menus.map((m, i) => `
+        <div class="menu-card" data-index="${i}">
+          <div class="menu-card-name">${escapeHtml(m.name)}</div>
+          <div class="menu-card-details">
+            <span class="menu-card-duration">${m.duration}分</span>
+            <span class="menu-card-price">¥${m.price.toLocaleString()}</span>
+          </div>
+        </div>
+      `).join('');
+
+      grid.querySelectorAll('.menu-card').forEach(card => {
+        card.addEventListener('click', () => {
+          selectedMenu = shopData.menus[parseInt(card.dataset.index)];
+          grid.querySelectorAll('.menu-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          setTimeout(() => {
+            renderCalendar();
+            goToStep(2);
+          }, 200);
+        });
+      });
+    }
+
+    // Step 2: Calendar
+    function renderCalendar() {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      document.getElementById('monthLabel').textContent = `${year}年${month + 1}月`;
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      let html = '';
+      // Empty cells
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="cal-day empty"></div>';
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(year, month, d);
+        const dateStr = formatDate(date);
+        const dayOfWeek = date.getDay();
+        const dayKey = dayKeyMap[dayOfWeek];
+        const hours = shopData.hours?.[dayKey];
+        const isPast = date < today;
+        const isClosed = hours?.closed;
+        const isAvailable = !isPast && !isClosed;
+        const isSelected = selectedDate === dateStr;
+
+        html += `<div class="cal-day ${isAvailable ? 'available' : 'disabled'} ${isSelected ? 'selected' : ''} ${isPast ? 'past' : ''}"
+          ${isAvailable ? `data-date="${dateStr}"` : ''}>
+          <span class="cal-day-num">${d}</span>
+          ${isClosed ? '<span class="cal-day-label">定休</span>' : ''}
+        </div>`;
+      }
+
+      document.getElementById('calendarDays').innerHTML = html;
+
+      document.querySelectorAll('.cal-day.available').forEach(day => {
+        day.addEventListener('click', () => {
+          selectedDate = day.dataset.date;
+          document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected'));
+          day.classList.add('selected');
+          setTimeout(() => {
+            renderTimeSlots();
+            goToStep(3);
+          }, 200);
+        });
+      });
+    }
+
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      currentMonth.setMonth(currentMonth.getMonth() - 1);
+      renderCalendar();
+    });
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      currentMonth.setMonth(currentMonth.getMonth() + 1);
+      renderCalendar();
+    });
+
+    // Step 3: Time Slots
+    function renderTimeSlots() {
+      const dateObj = new Date(selectedDate + 'T00:00:00');
+      const dayKey = dayKeyMap[dateObj.getDay()];
+      const hours = shopData.hours?.[dayKey];
+
+      if (!hours || hours.closed) {
+        document.getElementById('timeSlots').innerHTML = '<p class="empty-state">この日は営業していません</p>';
+        return;
+      }
+
+      const dayLabel = `${selectedDate.replace(/-/g, '/')}（${'日月火水木金土'[dateObj.getDay()]}）`;
+      document.getElementById('selectedDateLabel').textContent = dayLabel;
+
+      const interval = shopData.slotInterval || 60;
+      const [startH, startM] = hours.start.split(':').map(Number);
+      const [endH, endM] = hours.end.split(':').map(Number);
+      const startMin = startH * 60 + startM;
+      const endMin = endH * 60 + endM;
+
+      // Get booked slots for this date
+      const dayBookings = existingBookings.filter(b => b.date === selectedDate);
+
+      function isSlotAvailable(slotTime, duration) {
+        const [sh, sm] = slotTime.split(':').map(Number);
+        const slotStart = sh * 60 + sm;
+        const slotEnd = slotStart + duration;
+
+        // Check if slot fits within business hours
+        if (slotEnd > endMin) return false;
+
+        // Check if slot is in the past
+        const now = new Date();
+        if (selectedDate === formatDate(now)) {
+          const currentMin = now.getHours() * 60 + now.getMinutes();
+          if (slotStart <= currentMin) return false;
+        }
+
+        // Check overlap with existing bookings
+        for (const b of dayBookings) {
+          const [bh, bm] = b.time.split(':').map(Number);
+          const bStart = bh * 60 + bm;
+          const bEnd = bStart + (b.duration || interval);
+          if (slotStart < bEnd && slotEnd > bStart) return false;
+        }
+        return true;
+      }
+
+      let html = '';
+      const menuDuration = selectedMenu.duration || interval;
+      let hasSlots = false;
+
+      for (let m = startMin; m < endMin; m += interval) {
+        const h = Math.floor(m / 60);
+        const min = m % 60;
+        const timeStr = `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+        const available = isSlotAvailable(timeStr, menuDuration);
+
+        if (available) hasSlots = true;
+        html += `<button class="time-slot ${available ? 'available' : 'disabled'}"
+          ${available ? `data-time="${timeStr}"` : 'disabled'}>
+          ${timeStr}
+        </button>`;
+      }
+
+      if (!hasSlots) {
+        html = '<p class="empty-state">この日は予約可能な時間がありません。<br>別の日付をお選びください。</p>';
+      }
+
+      document.getElementById('timeSlots').innerHTML = html;
+
+      document.querySelectorAll('.time-slot.available').forEach(slot => {
+        slot.addEventListener('click', () => {
+          selectedTime = slot.dataset.time;
+          document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+          slot.classList.add('selected');
+          setTimeout(() => goToStep(4), 200);
+        });
+      });
+    }
+
+    // Step 4: Customer Form
+    document.getElementById('customerForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      if (!name || !phone) {
+        alert('お名前と電話番号は必須です');
+        return;
+      }
+      renderConfirmation();
+      goToStep(5);
+    });
+
+    // Step 5: Confirmation
+    function renderConfirmation() {
+      const dateObj = new Date(selectedDate + 'T00:00:00');
+      const dateLabel = `${selectedDate.replace(/-/g, '/')}（${'日月火水木金土'[dateObj.getDay()]}）`;
+
+      document.getElementById('confMenu').textContent = selectedMenu.name;
+      document.getElementById('confDate').textContent = dateLabel;
+      document.getElementById('confTime').textContent = selectedTime;
+      document.getElementById('confDuration').textContent = `${selectedMenu.duration}分`;
+      document.getElementById('confPrice').textContent = `¥${selectedMenu.price.toLocaleString()}`;
+      document.getElementById('confName').textContent = document.getElementById('custName').value;
+      document.getElementById('confPhone').textContent = document.getElementById('custPhone').value;
+      document.getElementById('confEmail').textContent = document.getElementById('custEmail').value || '未入力';
+    }
+
+    // Confirm Booking
+    document.getElementById('confirmBookingBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('confirmBookingBtn');
+      btn.disabled = true;
+      btn.textContent = '予約処理中...';
+
+      try {
+        const bookingData = {
+          shopId: shopId,
+          menuName: selectedMenu.name,
+          date: selectedDate,
+          time: selectedTime,
+          duration: selectedMenu.duration,
+          customerName: document.getElementById('custName').value.trim(),
+          customerPhone: document.getElementById('custPhone').value.trim(),
+          customerEmail: document.getElementById('custEmail').value.trim(),
+          status: 'confirmed',
+          createdAt: serverTimestamp(),
+        };
+
+        await addDoc(collection(db, 'bookings'), bookingData);
+
+        // Add to local bookings to prevent double booking
+        existingBookings.push(bookingData);
+
+        const dateObj = new Date(selectedDate + 'T00:00:00');
+        const dateLabel = `${selectedDate.replace(/-/g, '/')}（${'日月火水木金土'[dateObj.getDay()]}）`;
+        document.getElementById('doneMenu').textContent = selectedMenu.name;
+        document.getElementById('doneDate').textContent = dateLabel;
+        document.getElementById('doneTime').textContent = selectedTime;
+        document.getElementById('doneName').textContent = bookingData.customerName;
+
+        goToStep(6);
+      } catch (err) {
+        alert('予約の保存に失敗しました。もう一度お試しください。');
+        btn.disabled = false;
+        btn.textContent = '予約を確定する';
+      }
+    });
+
+    function formatDate(d) {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

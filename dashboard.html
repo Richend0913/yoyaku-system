@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理画面 - カンタン予約</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+  <header class="header dashboard-header">
+    <div class="container header-inner">
+      <a href="dashboard.html" class="logo">
+        <span class="logo-icon">📅</span>
+        <span class="logo-text">カンタン予約</span>
+      </a>
+      <div class="header-right">
+        <span id="shopNameHeader" class="shop-name-header"></span>
+        <button id="logoutBtn" class="btn btn-outline btn-sm">ログアウト</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>読み込み中...</p>
+  </div>
+
+  <main class="dashboard" id="dashboardMain" style="display:none;">
+    <div class="container">
+      <!-- Tab Navigation -->
+      <div class="dash-tabs">
+        <button class="dash-tab active" data-tab="today">今日の予約</button>
+        <button class="dash-tab" data-tab="calendar">カレンダー</button>
+        <button class="dash-tab" data-tab="menus">メニュー編集</button>
+        <button class="dash-tab" data-tab="settings">設定</button>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-value" id="todayCount">0</div>
+          <div class="stat-label">今日の予約</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="monthCount">0</div>
+          <div class="stat-label">今月の予約</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="monthRevenue">¥0</div>
+          <div class="stat-label">売上見込み</div>
+        </div>
+      </div>
+
+      <!-- Booking Link -->
+      <div class="booking-link-bar">
+        <label>予約ページURL:</label>
+        <div class="link-copy-group">
+          <input type="text" id="bookingUrl" readonly>
+          <button id="copyUrlBtn" class="btn btn-primary btn-sm">コピー</button>
+        </div>
+      </div>
+
+      <!-- Tab: Today's Bookings -->
+      <div class="tab-content active" id="tab-today">
+        <h2>今日の予約一覧</h2>
+        <div id="todayBookings" class="bookings-list">
+          <p class="empty-state">予約はありません</p>
+        </div>
+      </div>
+
+      <!-- Tab: Calendar -->
+      <div class="tab-content" id="tab-calendar">
+        <h2>週間カレンダー</h2>
+        <div class="calendar-nav">
+          <button id="prevWeek" class="btn btn-outline btn-sm">← 前週</button>
+          <span id="weekLabel"></span>
+          <button id="nextWeek" class="btn btn-outline btn-sm">次週 →</button>
+        </div>
+        <div class="week-calendar" id="weekCalendar"></div>
+      </div>
+
+      <!-- Tab: Menu Edit -->
+      <div class="tab-content" id="tab-menus">
+        <h2>メニュー編集</h2>
+        <div id="menuEditList"></div>
+        <button id="addMenuEditBtn" class="btn btn-outline btn-sm">＋ メニューを追加</button>
+        <div class="form-actions">
+          <button id="saveMenusBtn" class="btn btn-primary">メニューを保存</button>
+        </div>
+      </div>
+
+      <!-- Tab: Settings -->
+      <div class="tab-content" id="tab-settings">
+        <h2>営業時間の編集</h2>
+        <div class="hours-grid" id="editHoursGrid"></div>
+        <div class="form-actions">
+          <button id="saveHoursBtn" class="btn btn-primary">営業時間を保存</button>
+        </div>
+        <hr>
+        <h2>店舗情報</h2>
+        <div class="form-group">
+          <label>店舗名</label>
+          <input type="text" id="editShopName">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>住所</label>
+            <input type="text" id="editShopAddress">
+          </div>
+          <div class="form-group">
+            <label>電話番号</label>
+            <input type="tel" id="editShopPhone">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>予約間隔</label>
+          <select id="editSlotInterval">
+            <option value="30">30分</option>
+            <option value="60">60分</option>
+            <option value="90">90分</option>
+            <option value="120">120分</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button id="saveInfoBtn" class="btn btn-primary">店舗情報を保存</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAyfqJPXfSTVJ0XaUUt0v15HyWbAsHDYW4",
+      authDomain: "jobconnect-app-54a70.firebaseapp.com",
+      projectId: "jobconnect-app-54a70",
+      storageBucket: "jobconnect-app-54a70.firebasestorage.app",
+      messagingSenderId: "901090319111",
+      appId: "1:901090319111:web:2a5eff8792cc964d54c3a2",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let shopId = null;
+    let shopData = null;
+    let allBookings = [];
+    let currentWeekStart = getMonday(new Date());
+
+    function getMonday(d) {
+      const date = new Date(d);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      date.setDate(diff);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function formatDate(d) {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function todayStr() { return formatDate(new Date()); }
+
+    const dayKeys = ['mon','tue','wed','thu','fri','sat','sun'];
+    const dayLabels = ['月','火','水','木','金','土','日'];
+    const dayLabelsFull = ['月曜日','火曜日','水曜日','木曜日','金曜日','土曜日','日曜日'];
+
+    // Auth check
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'register.html';
+        return;
+      }
+      try {
+        const ownerDoc = await getDoc(doc(db, 'shopOwners', user.uid));
+        if (!ownerDoc.exists()) {
+          window.location.href = 'register.html';
+          return;
+        }
+        shopId = ownerDoc.data().shopId;
+        const shopDoc = await getDoc(doc(db, 'shops', shopId));
+        if (!shopDoc.exists()) {
+          window.location.href = 'register.html';
+          return;
+        }
+        shopData = shopDoc.data();
+        await initDashboard();
+      } catch (err) {
+        console.error(err);
+        alert('データの読み込みに失敗しました');
+      }
+    });
+
+    async function initDashboard() {
+      document.getElementById('shopNameHeader').textContent = shopData.name;
+      const baseUrl = window.location.origin + window.location.pathname.replace('dashboard.html', '');
+      document.getElementById('bookingUrl').value = `${baseUrl}book.html?shop=${shopId}`;
+
+      // Load all bookings for this shop
+      const bookingsQuery = query(collection(db, 'bookings'), where('shopId', '==', shopId));
+      const snap = await getDocs(bookingsQuery);
+      allBookings = [];
+      snap.forEach(d => allBookings.push({ id: d.id, ...d.data() }));
+
+      renderStats();
+      renderTodayBookings();
+      renderCalendar();
+      initMenuEditor();
+      initSettingsEditor();
+
+      document.getElementById('loadingOverlay').style.display = 'none';
+      document.getElementById('dashboardMain').style.display = 'block';
+    }
+
+    // Stats
+    function renderStats() {
+      const today = todayStr();
+      const todayBookings = allBookings.filter(b => b.date === today && b.status !== 'cancelled');
+      document.getElementById('todayCount').textContent = todayBookings.length;
+
+      const now = new Date();
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const monthBookings = allBookings.filter(b => b.date.startsWith(monthStr) && b.status !== 'cancelled');
+      document.getElementById('monthCount').textContent = monthBookings.length;
+
+      let revenue = 0;
+      monthBookings.forEach(b => {
+        const menu = shopData.menus.find(m => m.name === b.menuName);
+        if (menu) revenue += menu.price;
+      });
+      document.getElementById('monthRevenue').textContent = `¥${revenue.toLocaleString()}`;
+    }
+
+    // Today's bookings
+    function renderTodayBookings() {
+      const container = document.getElementById('todayBookings');
+      const today = todayStr();
+      const bookings = allBookings.filter(b => b.date === today).sort((a,b) => a.time.localeCompare(b.time));
+
+      if (bookings.length === 0) {
+        container.innerHTML = '<p class="empty-state">今日の予約はありません</p>';
+        return;
+      }
+
+      container.innerHTML = bookings.map(b => `
+        <div class="booking-card ${b.status}">
+          <div class="booking-time">${b.time}</div>
+          <div class="booking-info">
+            <div class="booking-customer">${escapeHtml(b.customerName)}</div>
+            <div class="booking-menu">${escapeHtml(b.menuName)} (${b.duration}分)</div>
+            <div class="booking-contact">${escapeHtml(b.customerPhone)}</div>
+          </div>
+          <div class="booking-actions">
+            <span class="booking-status status-${b.status}">${statusLabel(b.status)}</span>
+            ${b.status === 'confirmed' ? `
+              <button class="btn btn-sm btn-primary" onclick="window.updateStatus('${b.id}', 'completed')">完了</button>
+              <button class="btn btn-sm btn-danger" onclick="window.updateStatus('${b.id}', 'cancelled')">キャンセル</button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function statusLabel(s) {
+      return { confirmed: '確認済み', completed: '完了', cancelled: 'キャンセル' }[s] || s;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    window.updateStatus = async (bookingId, newStatus) => {
+      if (!confirm(`予約を「${statusLabel(newStatus)}」に変更しますか？`)) return;
+      try {
+        await updateDoc(doc(db, 'bookings', bookingId), { status: newStatus });
+        const b = allBookings.find(x => x.id === bookingId);
+        if (b) b.status = newStatus;
+        renderTodayBookings();
+        renderStats();
+        renderCalendar();
+      } catch (err) {
+        alert('更新に失敗しました: ' + err.message);
+      }
+    };
+
+    // Calendar
+    function renderCalendar() {
+      const cal = document.getElementById('weekCalendar');
+      const label = document.getElementById('weekLabel');
+
+      const endDate = new Date(currentWeekStart);
+      endDate.setDate(endDate.getDate() + 6);
+      label.textContent = `${formatDate(currentWeekStart)} 〜 ${formatDate(endDate)}`;
+
+      let html = '<div class="cal-header">';
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(currentWeekStart);
+        d.setDate(d.getDate() + i);
+        const isToday = formatDate(d) === todayStr();
+        html += `<div class="cal-day-header ${isToday ? 'today' : ''}">${dayLabels[i]}<br><small>${d.getDate()}</small></div>`;
+      }
+      html += '</div><div class="cal-body">';
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(currentWeekStart);
+        d.setDate(d.getDate() + i);
+        const dateStr = formatDate(d);
+        const dayBookings = allBookings.filter(b => b.date === dateStr && b.status !== 'cancelled').sort((a,b) => a.time.localeCompare(b.time));
+        const isToday = dateStr === todayStr();
+
+        html += `<div class="cal-day-col ${isToday ? 'today' : ''}">`;
+        if (dayBookings.length === 0) {
+          html += '<div class="cal-empty">-</div>';
+        } else {
+          dayBookings.forEach(b => {
+            html += `<div class="cal-booking status-${b.status}"><span class="cal-time">${b.time}</span> ${escapeHtml(b.customerName)}</div>`;
+          });
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+      cal.innerHTML = html;
+    }
+
+    document.getElementById('prevWeek').addEventListener('click', () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      renderCalendar();
+    });
+    document.getElementById('nextWeek').addEventListener('click', () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      renderCalendar();
+    });
+
+    // Tabs
+    document.querySelectorAll('.dash-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Copy URL
+    document.getElementById('copyUrlBtn').addEventListener('click', () => {
+      const input = document.getElementById('bookingUrl');
+      input.select();
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = document.getElementById('copyUrlBtn');
+        btn.textContent = 'コピー済み!';
+        setTimeout(() => btn.textContent = 'コピー', 2000);
+      });
+    });
+
+    // Menu Editor
+    function initMenuEditor() {
+      const list = document.getElementById('menuEditList');
+      list.innerHTML = '';
+      shopData.menus.forEach(m => addMenuEditItem(m.name, m.duration, m.price));
+    }
+
+    function addMenuEditItem(name = '', duration = 60, price = 0) {
+      const div = document.createElement('div');
+      div.className = 'menu-item';
+      div.innerHTML = `
+        <div class="menu-item-fields">
+          <input type="text" placeholder="メニュー名" class="menu-name" value="${escapeHtml(name)}">
+          <select class="menu-duration">
+            ${[30,60,90,120,150,180].map(d => `<option value="${d}" ${d===duration?'selected':''}>${d}分</option>`).join('')}
+          </select>
+          <input type="number" placeholder="価格（円）" class="menu-price" value="${price}" min="0">
+        </div>
+        <button type="button" class="menu-remove" onclick="this.parentElement.remove()">✕</button>
+      `;
+      document.getElementById('menuEditList').appendChild(div);
+    }
+
+    document.getElementById('addMenuEditBtn').addEventListener('click', () => addMenuEditItem());
+
+    document.getElementById('saveMenusBtn').addEventListener('click', async () => {
+      const menus = [];
+      document.querySelectorAll('#menuEditList .menu-item').forEach(item => {
+        const name = item.querySelector('.menu-name').value.trim();
+        if (name) {
+          menus.push({
+            name,
+            duration: parseInt(item.querySelector('.menu-duration').value),
+            price: parseInt(item.querySelector('.menu-price').value) || 0,
+          });
+        }
+      });
+      try {
+        await updateDoc(doc(db, 'shops', shopId), { menus });
+        shopData.menus = menus;
+        alert('メニューを保存しました');
+      } catch (err) {
+        alert('保存に失敗しました: ' + err.message);
+      }
+    });
+
+    // Settings Editor - Hours
+    function initSettingsEditor() {
+      const grid = document.getElementById('editHoursGrid');
+      grid.innerHTML = '';
+      dayKeys.forEach((key, i) => {
+        const h = shopData.hours?.[key] || { start: '09:00', end: '18:00', closed: false };
+        const row = document.createElement('div');
+        row.className = 'hours-row';
+        row.innerHTML = `
+          <label class="hours-day">${dayLabelsFull[i]}</label>
+          <div class="hours-inputs">
+            <select data-day="${key}" data-field="start" class="hours-select">${generateTimeOptions(h.start)}</select>
+            <span class="hours-separator">〜</span>
+            <select data-day="${key}" data-field="end" class="hours-select">${generateTimeOptions(h.end)}</select>
+          </div>
+          <label class="hours-closed-label">
+            <input type="checkbox" data-day="${key}" data-field="closed" class="hours-closed" ${h.closed?'checked':''}>
+            定休
+          </label>
+        `;
+        grid.appendChild(row);
+      });
+
+      document.getElementById('editShopName').value = shopData.name || '';
+      document.getElementById('editShopAddress').value = shopData.address || '';
+      document.getElementById('editShopPhone').value = shopData.phone || '';
+      document.getElementById('editSlotInterval').value = shopData.slotInterval || 60;
+    }
+
+    function generateTimeOptions(defaultVal) {
+      let opts = '';
+      for (let h = 0; h < 24; h++) {
+        for (let m = 0; m < 60; m += 30) {
+          const val = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+          opts += `<option value="${val}"${val===defaultVal?' selected':''}>${val}</option>`;
+        }
+      }
+      return opts;
+    }
+
+    document.getElementById('saveHoursBtn').addEventListener('click', async () => {
+      const hours = {};
+      dayKeys.forEach(key => {
+        const grid = document.getElementById('editHoursGrid');
+        hours[key] = {
+          start: grid.querySelector(`[data-day="${key}"][data-field="start"]`).value,
+          end: grid.querySelector(`[data-day="${key}"][data-field="end"]`).value,
+          closed: grid.querySelector(`[data-day="${key}"][data-field="closed"]`).checked,
+        };
+      });
+      try {
+        await updateDoc(doc(db, 'shops', shopId), { hours });
+        shopData.hours = hours;
+        alert('営業時間を保存しました');
+      } catch (err) {
+        alert('保存に失敗しました: ' + err.message);
+      }
+    });
+
+    document.getElementById('saveInfoBtn').addEventListener('click', async () => {
+      const updates = {
+        name: document.getElementById('editShopName').value.trim(),
+        address: document.getElementById('editShopAddress').value.trim(),
+        phone: document.getElementById('editShopPhone').value.trim(),
+        slotInterval: parseInt(document.getElementById('editSlotInterval').value),
+      };
+      try {
+        await updateDoc(doc(db, 'shops', shopId), updates);
+        Object.assign(shopData, updates);
+        document.getElementById('shopNameHeader').textContent = updates.name;
+        alert('店舗情報を保存しました');
+      } catch (err) {
+        alert('保存に失敗しました: ' + err.message);
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
