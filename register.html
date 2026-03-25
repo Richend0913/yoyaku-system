@@ -155,7 +155,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js';
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
-    import { getFirestore, doc, setDoc, getDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js';
+    import { getFirestore, doc, setDoc, getDoc, addDoc, collection, query, where, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyAyfqJPXfSTVJ0XaUUt0v15HyWbAsHDYW4",
@@ -169,6 +169,25 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    // Read referral parameter from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+
+    // Resolve affiliate UID from referral code
+    async function resolveAffiliateUid(code) {
+      if (!code) return null;
+      try {
+        const q = query(collection(db, 'affiliates'), where('referralCode', '==', code));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          return snap.docs[0].id;
+        }
+      } catch (e) {
+        console.error('Error resolving affiliate:', e);
+      }
+      return null;
+    }
 
     const days = [
       { key: 'mon', label: '月曜日' },
@@ -341,6 +360,9 @@
 
       try {
         const shopRef = doc(collection(db, 'shops'));
+        // Resolve affiliate if ref parameter exists
+        const affiliateUid = await resolveAffiliateUid(refCode);
+
         const shopData = {
           ownerId: user.uid,
           name: shopName,
@@ -357,8 +379,29 @@
           createdAt: serverTimestamp(),
         };
 
+        // Add referral info if affiliate exists
+        if (affiliateUid) {
+          shopData.referredBy = affiliateUid;
+        }
+
         await setDoc(shopRef, shopData);
         await setDoc(doc(db, 'shopOwners', user.uid), { shopId: shopRef.id });
+
+        // Create referral record if affiliate exists
+        if (affiliateUid) {
+          try {
+            await addDoc(collection(db, 'referrals'), {
+              affiliateId: affiliateUid,
+              shopId: shopRef.id,
+              shopName: shopName,
+              registeredAt: serverTimestamp(),
+              status: 'pending',
+              reward: 2000
+            });
+          } catch (refError) {
+            console.error('Error creating referral record:', refError);
+          }
+        }
 
         showSuccessScreen(shopRef.id);
       } catch (error) {

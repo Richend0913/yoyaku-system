@@ -5168,3 +5168,50 @@ html, body {
     text-align: left;
   }
 }
+
+/* ============================================
+   Affiliate Recruit Section (Landing Page)
+   ============================================ */
+.affiliate-recruit {
+  padding: 80px 0;
+  background: var(--bg-warm);
+}
+.affiliate-recruit-card {
+  max-width: 800px;
+  margin: 40px auto 0;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  padding: 40px;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+}
+.affiliate-recruit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+.affiliate-recruit-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+}
+.affiliate-recruit-icon {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, rgba(79,70,229,0.08), rgba(249,115,22,0.08));
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 768px) {
+  .affiliate-recruit-content {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+  .affiliate-recruit-card {
+    padding: 28px 20px;
+  }
+}
