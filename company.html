@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>運営者情報 - カンタン予約</title>
+  <meta name="description" content="カンタン予約の運営者情報・特定商取引法に基づく表記。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1a1a1a; background: #ffffff; line-height: 1.8;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+    .lp-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .lp-header-inner {
+      max-width: 800px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between; height: 64px;
+    }
+    .lp-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #1a1a1a; }
+    .lp-logo-icon { width: 28px; height: 28px; }
+    .lp-logo-text { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; }
+    .lp-nav { display: flex; align-items: center; gap: 32px; }
+    .lp-nav a { font-size: 13px; font-weight: 400; color: #888; text-decoration: none; transition: color 0.2s ease; }
+    .lp-nav a:hover { color: #1a1a1a; }
+    .lp-container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+
+    .article-hero { padding: 120px 0 48px; }
+    .article-hero h1 { font-size: clamp(24px, 4vw, 36px); font-weight: 300; line-height: 1.4; letter-spacing: -0.01em; color: #1a1a1a; }
+    .article-meta { font-size: 13px; color: #999; margin-top: 12px; }
+
+    /* Notice */
+    .notice-box {
+      margin-bottom: 48px; padding: 16px 20px;
+      background: #fffbf7; border: 1px solid #fed7aa; border-radius: 4px;
+      font-size: 13px; color: #92400e; line-height: 1.7;
+    }
+
+    /* Info table */
+    .info-section { padding: 0 0 80px; }
+    .info-section h2 {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
+      color: #6366f1; margin-bottom: 32px;
+    }
+    .info-table {
+      width: 100%; border-collapse: collapse; margin-bottom: 48px;
+    }
+    .info-table tr { border-bottom: 1px solid #e8e8e8; }
+    .info-table tr:first-child { border-top: 1px solid #e8e8e8; }
+    .info-table th {
+      width: 180px; padding: 16px 0; text-align: left; vertical-align: top;
+      font-size: 14px; font-weight: 400; color: #888;
+    }
+    .info-table td {
+      padding: 16px 0; font-size: 14px; color: #1a1a1a; line-height: 1.8;
+    }
+    .info-table td .placeholder {
+      color: #ccc; font-style: italic;
+    }
+
+    /* Footer */
+    .lp-footer { padding: 48px 0; border-top: 1px solid #e8e8e8; background: #ffffff; }
+    .lp-footer-inner { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
+    .lp-footer-brand { font-size: 15px; font-weight: 500; color: #1a1a1a; }
+    .lp-footer-brand p { font-size: 12px; color: #bbb; font-weight: 400; margin-top: 4px; }
+    .lp-footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+    .lp-footer-links a { font-size: 13px; color: #888; text-decoration: none; transition: color 0.2s ease; }
+    .lp-footer-links a:hover { color: #1a1a1a; }
+    .lp-footer-bottom { font-size: 12px; color: #bbb; }
+    @media (max-width: 768px) {
+      .lp-nav { display: none; }
+      .info-table th { width: 120px; font-size: 13px; }
+      .info-table td { font-size: 13px; }
+      .lp-footer-inner { flex-direction: column; }
+      .lp-footer-links { flex-wrap: wrap; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="lp-header">
+    <div class="lp-header-inner">
+      <a href="index.html" class="lp-logo">
+        <svg class="lp-logo-icon" width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect width="28" height="28" rx="8" fill="#6366f1"/>
+          <path d="M8 10h12M8 14h12M8 18h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="lp-logo-text">カンタン予約</span>
+      </a>
+      <nav class="lp-nav">
+        <a href="index.html#features">サービス</a>
+        <a href="index.html#pricing">料金</a>
+        <a href="contact.html">お問い合わせ</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="lp-container">
+    <div class="article-hero">
+      <h1>運営者情報</h1>
+      <p class="article-meta">特定商取引法に基づく表記</p>
+    </div>
+
+    <div class="notice-box">
+      ※ 以下の情報はテンプレートです。実際の情報に更新してください。
+    </div>
+
+    <section class="info-section">
+      <h2>事業者情報</h2>
+      <table class="info-table">
+        <tr>
+          <th>事業者名</th>
+          <td>Richend Digital</td>
+        </tr>
+        <tr>
+          <th>代表者</th>
+          <td class="placeholder">（要記入）</td>
+        </tr>
+        <tr>
+          <th>所在地</th>
+          <td class="placeholder">（要記入）</td>
+        </tr>
+        <tr>
+          <th>連絡先</th>
+          <td class="placeholder">（要記入）</td>
+        </tr>
+        <tr>
+          <th>メールアドレス</th>
+          <td>info@example.com</td>
+        </tr>
+      </table>
+
+      <h2>サービスについて</h2>
+      <table class="info-table">
+        <tr>
+          <th>サービス名</th>
+          <td>カンタン予約</td>
+        </tr>
+        <tr>
+          <th>サービス内容</th>
+          <td>店舗事業者向けオンライン予約管理システム</td>
+        </tr>
+        <tr>
+          <th>対象</th>
+          <td>美容室・ネイルサロン・飲食店・整体院等の小規模店舗</td>
+        </tr>
+      </table>
+
+      <h2>料金・支払い</h2>
+      <table class="info-table">
+        <tr>
+          <th>料金</th>
+          <td>
+            ライトプラン: ¥3,000/月（税込）<br>
+            スタンダードプラン: ¥5,000/月（税込）
+          </td>
+        </tr>
+        <tr>
+          <th>支払方法</th>
+          <td>クレジットカード（VISA / Mastercard / JCB / American Express）</td>
+        </tr>
+        <tr>
+          <th>支払時期</th>
+          <td>月額課金（毎月自動更新）</td>
+        </tr>
+        <tr>
+          <th>無料トライアル</th>
+          <td>14日間（クレジットカード登録不要）</td>
+        </tr>
+      </table>
+
+      <h2>解約・返金</h2>
+      <table class="info-table">
+        <tr>
+          <th>解約</th>
+          <td>いつでも可能。ダッシュボードから即時解約手続きが行えます。</td>
+        </tr>
+        <tr>
+          <th>解約後のサービス</th>
+          <td>解約手続き後、現在の請求期間の終了までサービスをご利用いただけます。</td>
+        </tr>
+        <tr>
+          <th>返金</th>
+          <td>日割りでの返金は行っておりません。無料トライアル期間中の解約については料金は発生しません。</td>
+        </tr>
+        <tr>
+          <th>データの取り扱い</th>
+          <td>解約後30日間はデータを保持します。その間にCSVエクスポートが可能です。30日経過後、データは完全に削除されます。</td>
+        </tr>
+      </table>
+
+      <h2>その他</h2>
+      <table class="info-table">
+        <tr>
+          <th>動作環境</th>
+          <td>
+            Chrome / Safari / Firefox / Edge の最新版<br>
+            スマートフォン（iOS 15以降 / Android 10以降）
+          </td>
+        </tr>
+        <tr>
+          <th>準拠法</th>
+          <td>日本法</td>
+        </tr>
+        <tr>
+          <th>管轄裁判所</th>
+          <td>東京地方裁判所</td>
+        </tr>
+      </table>
+    </section>
+  </div>
+
+  <footer class="lp-footer">
+    <div class="lp-container">
+      <div class="lp-footer-inner">
+        <div class="lp-footer-brand">
+          カンタン予約
+          <p>小規模店舗向け予約管理システム</p>
+        </div>
+        <div class="lp-footer-links">
+          <a href="terms.html">利用規約</a>
+          <a href="privacy.html">プライバシーポリシー</a>
+          <a href="contact.html">お問い合わせ</a>
+          <a href="company.html">運営者情報</a>
+        </div>
+      </div>
+      <div class="lp-footer-bottom">
+        <p>&copy; 2026 カンタン予約. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
